@@ -41,6 +41,9 @@ export type UserPreferences = {
   startPage: StartPageDestination;
   /** Balance the user wants to keep in the daily forecast; `null` uses the automatic value. */
   forecastMinimumBalance: number | null;
+  /** Rule by condition of the expense nature used by the daily budget. */
+  installmentsAreFixed: boolean;
+  recurringAreFixed: boolean;
 };
 
 export type UserPreferencesRecord = {
@@ -54,6 +57,8 @@ export type UserPreferencesRecord = {
   mobileShortcut: string;
   startPage: string;
   forecastMinimumBalance?: string | number | null;
+  installmentsAreFixed?: boolean;
+  recurringAreFixed?: boolean;
 };
 
 const applicationThemeSet = new Set<string>(applicationThemes);
@@ -75,6 +80,8 @@ export function createDefaultUserPreferences(): UserPreferences {
     mobileShortcut: "accounts",
     startPage: "dashboard",
     forecastMinimumBalance: null,
+    installmentsAreFixed: true,
+    recurringAreFixed: true,
   };
 }
 
@@ -113,6 +120,14 @@ export function normalizeUserPreferences(
       ? (preferences.startPage as StartPageDestination)
       : defaults.startPage,
     forecastMinimumBalance: normalizeMinimumBalance(preferences.forecastMinimumBalance),
+    installmentsAreFixed:
+      typeof preferences.installmentsAreFixed === "boolean"
+        ? preferences.installmentsAreFixed
+        : defaults.installmentsAreFixed,
+    recurringAreFixed:
+      typeof preferences.recurringAreFixed === "boolean"
+        ? preferences.recurringAreFixed
+        : defaults.recurringAreFixed,
   };
 }
 

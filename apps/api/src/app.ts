@@ -34,6 +34,7 @@ import { dashboardRepository } from "./repositories/dashboard.repository";
 import { deviceTokensRepository } from "./repositories/device-tokens.repository";
 import { dueDateRulesRepository } from "./repositories/due-date-rules.repository";
 import { establishmentsRepository } from "./repositories/establishments.repository";
+import { expenseNaturesRepository } from "./repositories/expense-natures.repository";
 import { externalExpensesRepository } from "./repositories/external-expenses.repository";
 import { financialDistributionRepository } from "./repositories/financial-distribution.repository";
 import { forecastSimulationsRepository } from "./repositories/forecast-simulations.repository";
@@ -86,6 +87,7 @@ import { createDashboardRoute } from "./routes/dashboard";
 import { createCompanionDeviceRoute, createDeviceTokensRoute } from "./routes/device-tokens";
 import { createDueDateRulesRoute } from "./routes/due-date-rules";
 import { createEstablishmentsRoute } from "./routes/establishments";
+import { createExpenseNaturesRoute } from "./routes/expense-natures";
 import { createExternalExpensesRoute } from "./routes/external-expenses";
 import { createFinancialDistributionRoute } from "./routes/financial-distribution";
 import { createForecastSimulationsRoute } from "./routes/forecast-simulations";
@@ -130,6 +132,7 @@ import {
   type DueDatePreviewCandidate,
 } from "./services/due-date-rules.service";
 import { createEstablishmentsService } from "./services/establishments.service";
+import { createExpenseNaturesService } from "./services/expense-natures.service";
 import {
   createExternalExpensesService,
   synchronizeRecurringExternalExpenses,
@@ -186,7 +189,17 @@ const accountsService = createAccountsService(accountsRepository);
 const accountsRoute = createAccountsRoute(accountsService);
 const cardsService = createCardsService(cardsRepository, undefined, dueDateRulesRepository);
 const cardsRoute = createCardsRoute(cardsService);
-const budgetsService = createBudgetsService(budgetsRepository, categoriesRepository);
+const preferencesService = createPreferencesService(preferencesRepository);
+const expenseNaturesService = createExpenseNaturesService(
+  expenseNaturesRepository,
+  preferencesService,
+);
+const budgetsService = createBudgetsService(
+  budgetsRepository,
+  categoriesRepository,
+  undefined,
+  expenseNaturesService,
+);
 const budgetsRoute = createBudgetsRoute(budgetsService);
 const commitmentsService = createCommitmentsService(commitmentsRepository);
 const forecastSimulationsService = createForecastSimulationsService(forecastSimulationsRepository);
@@ -339,7 +352,6 @@ const dueDateRulesService = createDueDateRulesService(
   },
 );
 const dueDateRulesRoute = createDueDateRulesRoute(dueDateRulesService);
-const preferencesService = createPreferencesService(preferencesRepository);
 const cashForecastRoute = createCashForecastRoute(
   createCashForecastService({
     commitments: commitmentsService,
@@ -478,6 +490,18 @@ app.use("/budgets", privateCache);
 app.use("/budgets/*", privateCache);
 app.use("/budgets", requireAuth);
 app.use("/budgets/*", requireAuth);
+for (const path of ["/expense-natures", "/expense-natures/*"]) {
+  app.use(path, privateCache);
+  app.use(path, requireAuth);
+  app.use(
+    path,
+    createMutationRateLimit({
+      windowMs: 60_000,
+      max: 20,
+      key: (context) => `expense-natures:${context.get("userId")}`,
+    }),
+  );
+}
 for (const path of ["/forecast-simulations", "/forecast-simulations/*"]) {
   app.use(path, privateCache);
   app.use(path, requireAuth);
@@ -822,6 +846,7 @@ app.route("/accounts", accountsRoute);
 app.route("/cards", cardsRoute);
 app.route("/budgets", budgetsRoute);
 app.route("/forecast-simulations", forecastSimulationsRoute);
+app.route("/expense-natures", createExpenseNaturesRoute(expenseNaturesService));
 app.route("/goals", goalsRoute);
 app.route("/bills", billsRoute);
 app.route("/categories", categoriesRoute);

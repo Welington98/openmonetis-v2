@@ -125,6 +125,13 @@ export function BudgetCard({
                 + <MoneyValue amount={budget.projectedAmount} /> previsto em recorrências
               </>
             ) : null}
+            {budget.fixedAmount > 0 ? (
+              <>
+                <br />
+                <MoneyValue amount={budget.fixedAmount} /> fixas (reservadas) ·{" "}
+                <MoneyValue amount={budget.variableAmount} /> variáveis
+              </>
+            ) : null}
           </p>
         ) : null}
       </CardContent>

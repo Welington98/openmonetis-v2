@@ -44,6 +44,7 @@
     "./ai-providers": "./src/ai-providers.ts",
     "./ai-tools": "./src/ai-tools.ts",
     "./usage-levels": "./src/usage-levels.ts",
+    "./expense-natures": "./src/expense-natures.ts",
     "./cash-forecast": "./src/cash-forecast.ts",
     "./forecast-simulations": "./src/forecast-simulations.ts"
   },

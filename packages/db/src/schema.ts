@@ -23,6 +23,7 @@ import type {
   DueDateAdjustmentDetails,
   DueDateRuleVersion,
 } from "@openmonetis/domain/due-date-rules";
+import { expenseNatures } from "@openmonetis/domain/expense-natures";
 import {
   personReportDeliveryStatuses,
   personReportDeliveryTriggers,
@@ -60,6 +61,7 @@ export const accountType = pgEnum("account_type", [
 ]);
 
 export const applicationTheme = pgEnum("application_theme", ["system", "light", "dark"]);
+export const expenseNature = pgEnum("expense_nature", expenseNatures);
 
 export const mobileShortcutDestination = pgEnum("mobile_shortcut_destination", [
   "accounts",
@@ -582,6 +584,8 @@ export const userPreferences = pgTable(
     mobileShortcut: mobileShortcutDestination("mobile_shortcut").notNull().default("accounts"),
     startPage: startPageDestination("start_page").notNull().default("dashboard"),
     forecastMinimumBalance: numeric("forecast_minimum_balance", { precision: 12, scale: 2 }),
+    installmentsAreFixed: boolean("installments_are_fixed").notNull().default(true),
+    recurringAreFixed: boolean("recurring_are_fixed").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
       .notNull()
@@ -2148,6 +2152,34 @@ export const budgets = pgTable(
     }).onDelete("cascade"),
     check("budgets_amount_positive_check", sql`${table.amount} > 0`),
     check("budgets_period_format_check", sql`${table.period} ~ '^[1-9][0-9]{3}-(0[1-9]|1[0-2])$'`),
+  ],
+);
+
+/** Categories whose expenses are always fixed or always variable, whatever their condition. */
+export const expenseCategoryNatures = pgTable(
+  "expense_category_natures",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    nature: expenseNature("nature").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.categoryId] }),
+    index("expense_category_natures_category_id_idx").on(table.categoryId),
+    foreignKey({
+      name: "expense_category_natures_category_id_user_id_categories_fk",
+      columns: [table.categoryId, table.userId],
+      foreignColumns: [categories.id, categories.userId],
+    }).onDelete("cascade"),
   ],
 );
 

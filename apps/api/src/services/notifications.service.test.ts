@@ -44,6 +44,8 @@ function fixture() {
           committedAmount: 0,
           availableAmount: 0,
           exceededAmount: 0,
+          fixedAmount: 0,
+          variableAmount: 0,
           usagePercentage: 0,
           unbudgetedCommittedAmount: 0,
           unbudgetedItems: [],

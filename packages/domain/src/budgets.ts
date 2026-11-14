@@ -1,4 +1,9 @@
 import type { CardClosingRule } from "./cards";
+import {
+  createDefaultExpenseClassification,
+  type ExpenseClassification,
+  resolveExpenseNature,
+} from "./expense-natures";
 import { fromCents, roundToTwoDecimals, toCents } from "./money";
 import { getRecurringDueDate } from "./recurring-expenses";
 import { getOccurrenceAmount, type SettlementAwareRule } from "./settlements";
@@ -10,6 +15,7 @@ import {
   listRecurrenceDatesInPeriod,
   type PaymentMethod,
   type RecurrenceFrequency,
+  type TransactionCondition,
   type TransactionOrigin,
   type TransactionType,
 } from "./transactions";
@@ -35,6 +41,8 @@ export type BudgetSpendingEntry = {
   amount: string | number;
   /** Purchase date (`YYYY-MM-DD`), used to know what was spent on the current day. */
   purchaseDate?: string | null;
+  /** Single, installment or recurring: with the category, decides whether it is fixed. */
+  condition?: TransactionCondition | null;
 };
 
 export type BudgetRecurringRule = SettlementAwareRule & {
@@ -60,6 +68,9 @@ export type BudgetProgress = {
   usagePercentage: number;
   status: BudgetStatus;
   level: UsageLevel;
+  /** Part of the committed amount that is fixed (installments, recurring, fixed categories). */
+  fixedAmount: number;
+  variableAmount: number;
 };
 
 /**
@@ -82,8 +93,10 @@ export type BudgetSpending = {
   projectedByCategory: Map<string, number>;
   uncategorizedActualAmount: number;
   uncategorizedProjectedAmount: number;
-  /** Expense impact of the entries purchased on the reference day, per category. */
+  /** Variable expense impact of the entries purchased on the reference day, per category. */
   todayByCategory?: Map<string, number>;
+  /** Fixed part of the actual and projected amounts, per category. */
+  fixedByCategory?: Map<string, number>;
 };
 
 export type BudgetOverviewCalculation = {
@@ -94,6 +107,8 @@ export type BudgetOverviewCalculation = {
   committedAmount: number;
   availableAmount: number;
   exceededAmount: number;
+  fixedAmount: number;
+  variableAmount: number;
   /** Committed share of all limits together, the same ratio each budget reports. */
   usagePercentage: number;
   unbudgetedCommittedAmount: number;
@@ -124,6 +139,7 @@ export function calculateBudgetProgress(
   limit: number,
   actualSpent: number,
   projected = 0,
+  fixed = 0,
 ): BudgetProgress {
   const normalizedLimit = Math.max(0, roundToTwoDecimals(limit));
   const actualSpentAmount = Math.max(0, roundToTwoDecimals(actualSpent));
@@ -134,6 +150,7 @@ export function calculateBudgetProgress(
   const usagePercentage =
     normalizedLimit > 0 ? roundToOneDecimal((committedAmount / normalizedLimit) * 100) : 0;
   const status = resolveBudgetStatus(normalizedLimit, committedAmount, usagePercentage);
+  const fixedAmount = Math.min(committedAmount, Math.max(0, roundToTwoDecimals(fixed)));
 
   return {
     actualSpentAmount,
@@ -144,6 +161,8 @@ export function calculateBudgetProgress(
     usagePercentage,
     status,
     level: resolveBudgetLevel(normalizedLimit, committedAmount),
+    fixedAmount,
+    variableAmount: roundToTwoDecimals(committedAmount - fixedAmount),
   };
 }
 
@@ -185,9 +204,11 @@ export function calculateBudgetSpending(
   recurringRules: BudgetRecurringRule[],
   period: string,
   today?: string,
+  classification: ExpenseClassification = createDefaultExpenseClassification(),
 ): BudgetSpending {
   const actualByCategory = new Map<string, number>();
   const todayByCategory = new Map<string, number>();
+  const fixedByCategory = new Map<string, number>();
   const projectedByCategory = new Map<string, number>();
   let uncategorizedActualAmount = 0;
   let uncategorizedProjectedAmount = 0;
@@ -203,7 +224,11 @@ export function calculateBudgetSpending(
     }
     if (entry.categoryId) addSignedAmount(actualByCategory, entry.categoryId, expenseImpact);
     else uncategorizedActualAmount += expenseImpact;
-    if (entry.categoryId && today && entry.purchaseDate === today) {
+    if (!entry.categoryId) continue;
+    // Fixed expenses are reserved for the whole month, so they never count as today's spending.
+    if (resolveExpenseNature(entry, classification) === "fixed") {
+      addSignedAmount(fixedByCategory, entry.categoryId, expenseImpact);
+    } else if (today && entry.purchaseDate === today) {
       addSignedAmount(todayByCategory, entry.categoryId, expenseImpact);
     }
   }
@@ -237,6 +262,19 @@ export function calculateBudgetSpending(
         });
 
         if (transactionPeriod === period) {
+          if (
+            rule.categoryId &&
+            resolveExpenseNature(
+              { condition: "recurring", categoryId: rule.categoryId },
+              classification,
+            ) === "fixed"
+          ) {
+            addAmount(
+              fixedByCategory,
+              rule.categoryId,
+              getOccurrenceAmount(rule, purchaseDate, rule.amount),
+            );
+          }
           if (rule.categoryId)
             addAmount(
               projectedByCategory,
@@ -258,6 +296,7 @@ export function calculateBudgetSpending(
     uncategorizedActualAmount: roundToTwoDecimals(uncategorizedActualAmount),
     uncategorizedProjectedAmount: roundToTwoDecimals(uncategorizedProjectedAmount),
     todayByCategory: roundedMap(todayByCategory),
+    fixedByCategory: roundedMap(fixedByCategory),
   };
 }
 
@@ -275,6 +314,8 @@ export function calculateBudgetOverview(
   let committedAmount = 0;
   let availableAmount = 0;
   let exceededAmount = 0;
+  let fixedAmount = 0;
+  let variableAmount = 0;
   let warningCount = 0;
 
   for (const budget of budgetLimits) {
@@ -283,6 +324,7 @@ export function calculateBudgetOverview(
       amount,
       spending.actualByCategory.get(budget.categoryId) ?? 0,
       spending.projectedByCategory.get(budget.categoryId) ?? 0,
+      spending.fixedByCategory?.get(budget.categoryId) ?? 0,
     );
     progressByCategory.set(budget.categoryId, progress);
     const daily =
@@ -301,6 +343,8 @@ export function calculateBudgetOverview(
     committedAmount += progress.committedAmount;
     availableAmount += progress.remainingAmount;
     exceededAmount += progress.exceededAmount;
+    fixedAmount += progress.fixedAmount;
+    variableAmount += progress.variableAmount;
     if (progress.status !== "onTrack") warningCount += 1;
   }
 
@@ -342,6 +386,8 @@ export function calculateBudgetOverview(
     committedAmount,
     availableAmount: roundToTwoDecimals(availableAmount),
     exceededAmount: roundToTwoDecimals(exceededAmount),
+    fixedAmount: roundToTwoDecimals(fixedAmount),
+    variableAmount: roundToTwoDecimals(variableAmount),
     usagePercentage:
       allocatedAmount > 0 ? roundToOneDecimal((committedAmount / allocatedAmount) * 100) : 0,
     unbudgetedCommittedAmount: Math.max(0, unbudgetedCommittedAmount),

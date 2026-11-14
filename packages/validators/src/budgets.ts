@@ -72,6 +72,8 @@ export const BudgetOutputSchema = z
     usagePercentage: z.number().nonnegative(),
     status: z.enum(budgetStatuses),
     level: z.enum(usageLevels),
+    fixedAmount: z.number().nonnegative(),
+    variableAmount: z.number().nonnegative(),
     daily: BudgetDailyAllowanceOutputSchema.nullable(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
@@ -87,6 +89,8 @@ export const BudgetOverviewOutputSchema = z
     committedAmount: z.number().nonnegative(),
     availableAmount: z.number().nonnegative(),
     exceededAmount: z.number().nonnegative(),
+    fixedAmount: z.number().nonnegative(),
+    variableAmount: z.number().nonnegative(),
     usagePercentage: z.number().nonnegative(),
     unbudgetedCommittedAmount: z.number().nonnegative(),
     unbudgetedItems: z.array(

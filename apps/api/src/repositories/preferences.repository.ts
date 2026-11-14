@@ -16,6 +16,8 @@ export const preferencesRepository = {
         mobileShortcut: userPreferences.mobileShortcut,
         startPage: userPreferences.startPage,
         forecastMinimumBalance: userPreferences.forecastMinimumBalance,
+        installmentsAreFixed: userPreferences.installmentsAreFixed,
+        recurringAreFixed: userPreferences.recurringAreFixed,
       })
       .from(userPreferences)
       .leftJoin(

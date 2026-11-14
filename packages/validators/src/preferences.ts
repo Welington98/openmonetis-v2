@@ -43,6 +43,8 @@ export const UserPreferencesOutputSchema = z
       .nonnegative()
       .max(9_999_999_999.99)
       .nullable(),
+    installmentsAreFixed: z.boolean(),
+    recurringAreFixed: z.boolean(),
   })
   .openapi("UserPreferencesOutput");
 

@@ -119,6 +119,7 @@ export const budgetsRepository = {
         categoryId: transactions.categoryId,
         origin: transactions.origin,
         type: transactions.type,
+        condition: transactions.condition,
         amount:
           sql<string>`case when ${transactionSplits.id} is not null then ${effectiveSplitAmountSql} else ${effectiveTransactionAmountSql} end`.as(
             "amount",

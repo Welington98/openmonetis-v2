@@ -10,6 +10,10 @@ import {
   getPreviousBudgetPeriod,
 } from "@openmonetis/domain/budgets";
 import type { CashForecastBudgetReserve } from "@openmonetis/domain/cash-forecast";
+import {
+  createDefaultExpenseClassification,
+  type ExpenseClassification,
+} from "@openmonetis/domain/expense-natures";
 import { getPeriodEndDate } from "@openmonetis/domain/transactions";
 import { getCurrentDateInBrazil } from "@openmonetis/shared/date-time";
 import type {
@@ -63,10 +67,19 @@ type BudgetCategoriesRepository = {
   ): Promise<{ id: string; type: "income" | "expense" } | null>;
 };
 
+type ExpenseClassificationReader = {
+  getClassification(userId: string): Promise<ExpenseClassification>;
+};
+
+const defaultClassificationReader: ExpenseClassificationReader = {
+  getClassification: async () => createDefaultExpenseClassification(),
+};
+
 export function createBudgetsService(
   repository: BudgetsRepository,
   categoriesRepository: BudgetCategoriesRepository,
   today: () => string = getCurrentDateInBrazil,
+  classification: ExpenseClassificationReader = defaultClassificationReader,
 ) {
   async function expenseCategory(categoryId: string, userId: string) {
     const category = await categoriesRepository.findByIdForUser(categoryId, userId);
@@ -81,12 +94,19 @@ export function createBudgetsService(
     period: string,
     budgetRows: Array<{ categoryId: string; amount: string }>,
   ) {
-    const [spendingEntries, recurringRules] = await Promise.all([
+    const [spendingEntries, recurringRules, expenseClassification] = await Promise.all([
       repository.listSpendingEntries(userId, period),
       repository.listRecurringRules(userId, getPeriodEndDate(period)),
+      classification.getClassification(userId),
     ]);
     const referenceDay = today();
-    const spending = calculateBudgetSpending(spendingEntries, recurringRules, period, referenceDay);
+    const spending = calculateBudgetSpending(
+      spendingEntries,
+      recurringRules,
+      period,
+      referenceDay,
+      expenseClassification,
+    );
     return calculateBudgetOverview(budgetRows, spending, { period, today: referenceDay });
   }
 
@@ -113,6 +133,8 @@ export function createBudgetsService(
       committedAmount: overview.committedAmount,
       availableAmount: overview.availableAmount,
       exceededAmount: overview.exceededAmount,
+      fixedAmount: overview.fixedAmount,
+      variableAmount: overview.variableAmount,
       usagePercentage: overview.usagePercentage,
       unbudgetedCommittedAmount: overview.unbudgetedCommittedAmount,
       unbudgetedItems: overview.unbudgetedItems,

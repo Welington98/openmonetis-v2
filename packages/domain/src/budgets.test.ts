@@ -166,3 +166,47 @@ test("budget overview reports four-step levels and sums the daily allowances", (
   assert.equal(result.daily?.spentTodayAmount, 30);
   assert.equal(result.daily?.level, "critical");
 });
+
+test("fixed expenses are reserved for the month instead of using up today's allowance", () => {
+  const today = "2026-11-21";
+  const entries = [
+    {
+      categoryId: "home",
+      type: "expense" as const,
+      origin: "regular" as const,
+      amount: "-40",
+      purchaseDate: today,
+      condition: "single" as const,
+    },
+    {
+      categoryId: "home",
+      type: "expense" as const,
+      origin: "regular" as const,
+      amount: "-300",
+      purchaseDate: today,
+      condition: "installment" as const,
+    },
+  ];
+  const overview = (classification?: Parameters<typeof calculateBudgetSpending>[4]) =>
+    calculateBudgetOverview(
+      [{ categoryId: "home", amount: 1_000 }],
+      calculateBudgetSpending(entries, [], "2026-11", today, classification),
+      { period: "2026-11", today },
+    );
+
+  const byCondition = overview();
+  assert.equal(byCondition.progressByCategory.get("home")?.fixedAmount, 300);
+  assert.equal(byCondition.progressByCategory.get("home")?.variableAmount, 40);
+  assert.equal(byCondition.dailyByCategory.get("home")?.allowanceAmount, 70);
+  assert.equal(byCondition.dailyByCategory.get("home")?.spentTodayAmount, 40);
+  assert.equal(byCondition.fixedAmount, 300);
+
+  const housingIsFixed = overview({
+    installmentsAreFixed: true,
+    recurringAreFixed: true,
+    categoryNatures: new Map([["home", "fixed" as const]]),
+  });
+  assert.equal(housingIsFixed.dailyByCategory.get("home")?.allowanceAmount, 66);
+  assert.equal(housingIsFixed.dailyByCategory.get("home")?.spentTodayAmount, 0);
+  assert.equal(housingIsFixed.progressByCategory.get("home")?.fixedAmount, 340);
+});

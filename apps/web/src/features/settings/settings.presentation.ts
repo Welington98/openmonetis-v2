@@ -3,6 +3,7 @@ import { SettingsApiError } from "./settings.api";
 export const settingsTabs = [
   "profile",
   "preferences",
+  "daily-budget",
   "due-date-rules",
   "security",
   "integrations",

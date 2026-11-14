@@ -19,9 +19,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Aba **Diária** na Projeção de saldo: saldo ao fim de cada dia, com dias realizados marcados,
   gastos variáveis previstos pelo orçamento, contas, receitas e faturas no dia do vencimento e
   detalhes de cada dia; cores pelo **saldo mínimo**, automático ou definido pelo usuário.
-- Endpoints `GET /reports/cash-forecast`, `GET /reports/cash-forecast/daily` e
+- Nova aba **Ajustes → Orçamento diário**: escolhe se parceladas e recorrentes são fixas, marca
+  categorias como sempre fixas ou sempre variáveis e define o saldo mínimo da projeção diária.
+  Despesas fixas ficam reservadas no mês e não contam como gasto do dia; os cards de orçamento
+  mostram a parte fixa e a variável.
+- Endpoints `GET /reports/cash-forecast`, `GET /reports/cash-forecast/daily`, `/expense-natures` e
   `/forecast-simulations`, campos `level` e `daily` no contrato de orçamentos e preferência
-  `forecastMinimumBalance`.
+  `forecastMinimumBalance`, `installmentsAreFixed` e `recurringAreFixed`.
 
 ### Alterado
 
@@ -32,7 +36,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ### Notas de atualização
 
 - A migration `0032_forecast_simulations` cria a tabela `forecast_simulations` e a
-  `0033_forecast_minimum_balance` adiciona `forecast_minimum_balance` às preferências.
+  `0033_forecast_minimum_balance` adiciona `forecast_minimum_balance` às preferências; a
+  `0034_expense_natures` cria `expense_category_natures` e as regras por tipo nas preferências.
 
 ## [0.17.1] - 2026-11-11
 
