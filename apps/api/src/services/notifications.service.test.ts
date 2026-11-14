@@ -48,6 +48,8 @@ function fixture() {
           unbudgetedCommittedAmount: 0,
           unbudgetedItems: [],
           warningCount: 0,
+          level: "healthy",
+          daily: null,
           items: [],
         };
       },

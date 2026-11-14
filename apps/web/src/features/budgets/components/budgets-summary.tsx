@@ -1,11 +1,17 @@
+import type { UsageLevel } from "@openmonetis/domain/usage-levels";
 import type { BudgetOverviewOutput } from "@openmonetis/validators/budgets";
 import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { MoneyValue } from "@/components/money-value";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { usageLevelBarStyles, usageLevelTextStyles } from "@/lib/usage-level-presentation";
 import { cn } from "@/lib/utils";
-import { formatBudgetAttention, formatBudgetPercentage } from "../budgets.presentation";
+import {
+  formatBudgetAttention,
+  formatBudgetPercentage,
+  formatDailyAllowanceDays,
+} from "../budgets.presentation";
 
 /**
  * Answers the page's main question first (how much of the month's limits is used), then breaks
@@ -14,6 +20,7 @@ import { formatBudgetAttention, formatBudgetPercentage } from "../budgets.presen
  */
 export function BudgetsSummary({ overview }: { overview: BudgetOverviewOutput }) {
   const hasExceeded = overview.exceededAmount > 0;
+  const daily = overview.daily;
 
   return (
     <Card className="gap-0 border py-0 shadow-none">
@@ -32,7 +39,9 @@ export function BudgetsSummary({ overview }: { overview: BudgetOverviewOutput })
             <p
               className={cn(
                 "font-medium text-sm tabular-nums",
-                hasExceeded ? "text-destructive" : "text-muted-foreground",
+                overview.level === "healthy"
+                  ? "text-muted-foreground"
+                  : usageLevelTextStyles[overview.level],
               )}
             >
               {formatBudgetPercentage(overview.usagePercentage)}% usado
@@ -40,15 +49,16 @@ export function BudgetsSummary({ overview }: { overview: BudgetOverviewOutput })
           </div>
           <Progress
             aria-label={`${formatBudgetPercentage(overview.usagePercentage)}% dos limites do mês usado`}
-            indicatorClassName={hasExceeded ? "bg-destructive" : "bg-brand"}
+            indicatorClassName={usageLevelBarStyles[overview.level]}
             value={Math.min(overview.usagePercentage, 100)}
           />
         </div>
 
         <dl
           className={cn(
-            "grid gap-x-6 gap-y-4 border-t pt-4 sm:grid-cols-3",
-            hasExceeded && "sm:grid-cols-4",
+            "grid gap-x-6 gap-y-4 border-t pt-4 sm:grid-cols-2",
+            daily || hasExceeded ? "lg:grid-cols-4" : "lg:grid-cols-3",
+            daily && hasExceeded && "lg:grid-cols-5",
           )}
         >
           <SummaryStat
@@ -66,11 +76,28 @@ export function BudgetsSummary({ overview }: { overview: BudgetOverviewOutput })
             label="Disponível"
             value={<MoneyValue amount={overview.availableAmount} />}
           />
+          {daily ? (
+            <SummaryStat
+              description={
+                daily.spentTodayAmount > 0 ? (
+                  <>
+                    Hoje <MoneyValue amount={daily.spentTodayAmount} className="text-xs" /> ·{" "}
+                    {formatDailyAllowanceDays(daily.daysRemaining)}
+                  </>
+                ) : (
+                  `Para gastos variáveis · ${formatDailyAllowanceDays(daily.daysRemaining)}`
+                )
+              }
+              label="Disponível por dia"
+              tone={daily.spentTodayAmount > 0 ? daily.level : undefined}
+              value={<MoneyValue amount={daily.allowanceAmount} />}
+            />
+          ) : null}
           {hasExceeded ? (
             <SummaryStat
               description="Soma do que passou em cada categoria"
               label="Acima do limite"
-              tone="destructive"
+              tone="critical"
               value={<MoneyValue amount={overview.exceededAmount} />}
             />
           ) : null}
@@ -93,20 +120,15 @@ function SummaryStat({
   tone,
   value,
 }: {
-  description: string;
+  description: ReactNode;
   label: string;
-  tone?: "destructive";
+  tone?: UsageLevel;
   value: ReactNode;
 }) {
   return (
     <div className="grid content-start gap-0.5">
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd
-        className={cn(
-          "font-medium text-lg tabular-nums",
-          tone === "destructive" && "text-destructive",
-        )}
-      >
+      <dd className={cn("font-medium text-lg tabular-nums", tone && usageLevelTextStyles[tone])}>
         {value}
       </dd>
       <dd className="text-muted-foreground text-xs">{description}</dd>

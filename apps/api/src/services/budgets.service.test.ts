@@ -12,6 +12,13 @@ function fixture() {
     async listByUserAndPeriod(user, period) {
       return rows.filter((r) => r.userId === user && r.period === period);
     },
+    async findLatestPeriodBefore(user, period) {
+      const periods = rows
+        .filter((r) => r.userId === user && r.period < period)
+        .map((r) => r.period)
+        .sort();
+      return periods.at(-1) ?? null;
+    },
     async findByIdForUser(id, user) {
       return rows.find((r) => r.id === id && r.userId === user) ?? null;
     },
@@ -72,12 +79,16 @@ function fixture() {
       return created;
     },
   };
-  const service = createBudgetsService(repository, {
-    async findByIdForUser(id, user) {
-      assert.equal(user, userId);
-      return id === "foreign" ? null : { id, type: id === "salary" ? "income" : "expense" };
+  const service = createBudgetsService(
+    repository,
+    {
+      async findByIdForUser(id, user) {
+        assert.equal(user, userId);
+        return id === "foreign" ? null : { id, type: id === "salary" ? "income" : "expense" };
+      },
     },
-  });
+    () => "2020-01-22",
+  );
   return { userId, rows, spending, rules, repository, service, writes: () => writes };
 }
 
@@ -212,4 +223,69 @@ test("reading and updating a foreign budget are rejected without changing the ow
   });
   await assert.rejects(f.service.remove(row.id, "stranger"), { code: "budget_not_found" });
   assert.deepEqual(f.rows, before);
+});
+
+test("budget overview derives today's allowance for variable spending after recurring commitments", async () => {
+  const f = fixture();
+  await f.service.create({ categoryId: "food", period: "2020-01", amount: 500 }, f.userId);
+  f.spending.push(
+    {
+      categoryId: "food",
+      type: "expense",
+      origin: "regular",
+      amount: "-200",
+      purchaseDate: "2020-01-05",
+    },
+    {
+      categoryId: "food",
+      type: "expense",
+      origin: "regular",
+      amount: "-15",
+      purchaseDate: "2020-01-22",
+    },
+  );
+  f.rules.push({
+    categoryId: "food",
+    type: "expense",
+    amount: "-100",
+    anchorDate: "2020-01-28",
+    startDate: "2020-01-28",
+    frequency: "monthly",
+    paymentMethod: "pix",
+    dueDate: null,
+    card: null,
+    status: "active",
+  });
+  const result = await f.service.list(f.userId, { period: "2020-01" });
+  assert.deepEqual(result.items[0].daily, {
+    allowanceAmount: 20,
+    spentTodayAmount: 15,
+    remainingTodayAmount: 5,
+    idealDailyAmount: 16.12,
+    daysRemaining: 10,
+    level: "attention",
+  });
+  assert.equal(result.items[0].level, "healthy");
+  assert.equal(result.daily?.allowanceAmount, 20);
+});
+
+test("budget reserves inherit the latest earlier limits for months without budgets", async () => {
+  const f = fixture();
+  await f.service.create({ categoryId: "food", period: "2020-01", amount: 300 }, f.userId);
+  f.spending.push({ categoryId: "food", type: "expense", origin: "regular", amount: "-120" });
+  assert.deepEqual(await f.service.projectReserve(f.userId, "2020-01"), {
+    period: "2020-01",
+    amount: 180,
+    estimated: false,
+  });
+  assert.deepEqual(await f.service.projectReserve(f.userId, "2020-03"), {
+    period: "2020-03",
+    amount: 180,
+    estimated: true,
+  });
+  assert.deepEqual(await f.service.projectReserve(f.userId, "2019-12"), {
+    period: "2019-12",
+    amount: 0,
+    estimated: false,
+  });
 });

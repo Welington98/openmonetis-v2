@@ -2146,6 +2146,38 @@ export const budgets = pgTable(
   ],
 );
 
+export const forecastSimulations = pgTable(
+  "forecast_simulations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    description: varchar("description", { length: 120 }).notNull(),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    installmentCount: integer("installment_count").notNull().default(1),
+    firstPeriod: varchar("first_period", { length: 7 }).notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("forecast_simulations_user_id_idx").on(table.userId, table.createdAt),
+    check("forecast_simulations_amount_positive_check", sql`${table.amount} > 0`),
+    check(
+      "forecast_simulations_installment_count_check",
+      sql`${table.installmentCount} BETWEEN 1 AND 60`,
+    ),
+    check(
+      "forecast_simulations_first_period_format_check",
+      sql`${table.firstPeriod} ~ '^[1-9][0-9]{3}-(0[1-9]|1[0-2])$'`,
+    ),
+  ],
+);
+
 export const goalTrackingType = pgEnum("goal_tracking_type", ["manual", "account"]);
 export const goalStatus = pgEnum("goal_status", ["active", "paused", "completed", "archived"]);
 
@@ -2582,6 +2614,10 @@ export const budgetsRelations = relations(budgets, ({ one }) => ({
     fields: [budgets.categoryId],
     references: [categories.id],
   }),
+}));
+
+export const forecastSimulationsRelations = relations(forecastSimulations, ({ one }) => ({
+  user: one(user, { fields: [forecastSimulations.userId], references: [user.id] }),
 }));
 
 export const goalsRelations = relations(goals, ({ one }) => ({

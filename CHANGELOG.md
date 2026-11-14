@@ -7,6 +7,28 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+
+- **Orçamentos** mostram quanto ainda é possível gastar por dia em cada categoria e no total do
+  mês, depois de reservar as recorrências previstas, com o gasto de hoje e os dias restantes.
+- Nova tela **Relatórios → Projeção de saldo**: planilha mês a mês (6 a 24 meses) com saldo
+  inicial, receitas, compromissos, orçamento a gastar, simulações e saldo final, colorida por
+  faixa e com o menor saldo e o primeiro mês negativo.
+- **Simulações de compra** salvas, à vista ou parceladas, que podem ser ativadas ou desativadas
+  para comparar a projeção com e sem uma compra por impulso, sem criar lançamentos.
+- Endpoints `GET /reports/cash-forecast` e `/forecast-simulations`, e campos `level` e `daily` no
+  contrato de orçamentos.
+
+### Alterado
+
+- Orçamentos passam a usar quatro faixas de cor: verde abaixo de 70%, amarelo até 90%, laranja até
+  100% e vermelho acima do limite. O status `warning` (alertas e notificações) passa a valer a
+  partir de 90%, em vez de 80%.
+
+### Notas de atualização
+
+- A migration `0032_forecast_simulations` cria a tabela `forecast_simulations`.
+
 ## [0.17.1] - 2026-11-11
 
 O desfoque translúcido do cabeçalho, dos menus e dos painéis volta a aparecer em Chrome, Edge e

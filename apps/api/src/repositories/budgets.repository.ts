@@ -10,7 +10,7 @@ import {
   transactions,
 } from "@openmonetis/db";
 import { resolveCardClosingRule } from "@openmonetis/domain/cards";
-import { and, asc, eq, isNull, lte, or, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, lt, lte, max, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { BudgetsRepository } from "../services/budgets.service";
 import { categoryLabelSql } from "./categories.repository";
@@ -58,6 +58,14 @@ export const budgetsRepository = {
       )
       .where(and(eq(budgets.userId, userId), eq(budgets.period, period)))
       .orderBy(asc(categories.name));
+  },
+
+  async findLatestPeriodBefore(userId, period) {
+    const [row] = await db
+      .select({ period: max(budgets.period) })
+      .from(budgets)
+      .where(and(eq(budgets.userId, userId), lt(budgets.period, period)));
+    return row?.period ?? null;
   },
 
   async findByIdForUser(id, userId) {
@@ -115,6 +123,9 @@ export const budgetsRepository = {
           sql<string>`case when ${transactionSplits.id} is not null then ${effectiveSplitAmountSql} else ${effectiveTransactionAmountSql} end`.as(
             "amount",
           ),
+        purchaseDate: sql<string>`to_char(${transactions.purchaseDate}, 'YYYY-MM-DD')`.as(
+          "purchase_date",
+        ),
       })
       .from(transactions)
       .innerJoin(

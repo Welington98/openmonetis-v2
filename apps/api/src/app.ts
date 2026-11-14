@@ -35,6 +35,7 @@ import { dueDateRulesRepository } from "./repositories/due-date-rules.repository
 import { establishmentsRepository } from "./repositories/establishments.repository";
 import { externalExpensesRepository } from "./repositories/external-expenses.repository";
 import { financialDistributionRepository } from "./repositories/financial-distribution.repository";
+import { forecastSimulationsRepository } from "./repositories/forecast-simulations.repository";
 import { goalsRepository } from "./repositories/goals.repository";
 import { inboxRepository } from "./repositories/inbox.repository";
 import { inboxRulesRepository } from "./repositories/inbox-rules.repository";
@@ -76,6 +77,7 @@ import { createAuthConfigRoute } from "./routes/auth-config";
 import { createBillsRoute } from "./routes/bills";
 import { createBudgetsRoute } from "./routes/budgets";
 import { createCardsRoute } from "./routes/cards";
+import { createCashForecastRoute } from "./routes/cash-forecast";
 import { createCategoriesRoute } from "./routes/categories";
 import { createCategoryTrendsRoute } from "./routes/category-trends";
 import { createCommitmentsRoute } from "./routes/commitments";
@@ -85,6 +87,7 @@ import { createDueDateRulesRoute } from "./routes/due-date-rules";
 import { createEstablishmentsRoute } from "./routes/establishments";
 import { createExternalExpensesRoute } from "./routes/external-expenses";
 import { createFinancialDistributionRoute } from "./routes/financial-distribution";
+import { createForecastSimulationsRoute } from "./routes/forecast-simulations";
 import { createGoalsRoute } from "./routes/goals";
 import { createCompanionInboxRoute, createInboxRoute } from "./routes/inbox";
 import { createInboxRulesRoute } from "./routes/inbox-rules";
@@ -115,6 +118,7 @@ import { createAuthConfigService } from "./services/auth-config.service";
 import { createBillsService } from "./services/bills.service";
 import { createBudgetsService } from "./services/budgets.service";
 import { createCardsService } from "./services/cards.service";
+import { createCashForecastService } from "./services/cash-forecast.service";
 import { createCategoriesService } from "./services/categories.service";
 import { createCategoryTrendsService } from "./services/category-trends.service";
 import { createCommitmentsService } from "./services/commitments.service";
@@ -130,6 +134,7 @@ import {
   synchronizeRecurringExternalExpenses,
 } from "./services/external-expenses.service";
 import { createFinancialDistributionService } from "./services/financial-distribution.service";
+import { createForecastSimulationsService } from "./services/forecast-simulations.service";
 import { createGoalsService } from "./services/goals.service";
 import { createInboxService } from "./services/inbox.service";
 import { createInboxRulesService } from "./services/inbox-rules.service";
@@ -182,6 +187,17 @@ const cardsService = createCardsService(cardsRepository, undefined, dueDateRules
 const cardsRoute = createCardsRoute(cardsService);
 const budgetsService = createBudgetsService(budgetsRepository, categoriesRepository);
 const budgetsRoute = createBudgetsRoute(budgetsService);
+const commitmentsService = createCommitmentsService(commitmentsRepository);
+const forecastSimulationsService = createForecastSimulationsService(forecastSimulationsRepository);
+const forecastSimulationsRoute = createForecastSimulationsRoute(forecastSimulationsService);
+const cashForecastRoute = createCashForecastRoute(
+  createCashForecastService({
+    commitments: commitmentsService,
+    budgets: budgetsService,
+    accounts: accountsService,
+    simulations: forecastSimulationsService,
+  }),
+);
 const goalsService = createGoalsService(goalsRepository, accountsService);
 const goalsRoute = createGoalsRoute(goalsService);
 const billsService = createBillsService(billsRepository, undefined, dueDateRulesRepository);
@@ -458,6 +474,18 @@ app.use("/budgets", privateCache);
 app.use("/budgets/*", privateCache);
 app.use("/budgets", requireAuth);
 app.use("/budgets/*", requireAuth);
+for (const path of ["/forecast-simulations", "/forecast-simulations/*"]) {
+  app.use(path, privateCache);
+  app.use(path, requireAuth);
+  app.use(
+    path,
+    createMutationRateLimit({
+      windowMs: 60_000,
+      max: 30,
+      key: (context) => `forecast-simulations:${context.get("userId")}`,
+    }),
+  );
+}
 app.use("/goals", privateCache);
 app.use("/goals/*", privateCache);
 app.use("/goals", requireAuth);
@@ -789,6 +817,7 @@ app.route("/api/auth/device", companionDeviceRoute);
 app.route("/accounts", accountsRoute);
 app.route("/cards", cardsRoute);
 app.route("/budgets", budgetsRoute);
+app.route("/forecast-simulations", forecastSimulationsRoute);
 app.route("/goals", goalsRoute);
 app.route("/bills", billsRoute);
 app.route("/categories", categoriesRoute);
@@ -818,10 +847,8 @@ app.route(
   ),
 );
 app.route("/reports/category-trends", categoryTrendsRoute);
-app.route(
-  "/reports/commitments",
-  createCommitmentsRoute(createCommitmentsService(commitmentsRepository)),
-);
+app.route("/reports/commitments", createCommitmentsRoute(commitmentsService));
+app.route("/reports/cash-forecast", cashForecastRoute);
 app.route("/reports/installments", installmentsRoute);
 app.route("/settings", settingsRoute);
 app.route("/preferences", preferencesRoute);

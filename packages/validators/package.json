@@ -24,6 +24,8 @@
     "./attachments": "./src/attachments.ts",
     "./bills": "./src/bills.ts",
     "./budgets": "./src/budgets.ts",
+    "./cash-forecast": "./src/cash-forecast.ts",
+    "./forecast-simulations": "./src/forecast-simulations.ts",
     "./goals": "./src/goals.ts",
     "./notes": "./src/notes.ts",
     "./notifications": "./src/notifications.ts",

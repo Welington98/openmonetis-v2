@@ -1,5 +1,6 @@
 import {
   type BudgetCreateDraft,
+  type BudgetDailyAllowance,
   type BudgetRecurringRule,
   type BudgetSpendingEntry,
   calculateBudgetOverview,
@@ -8,7 +9,9 @@ import {
   createBudgetDraft,
   getPreviousBudgetPeriod,
 } from "@openmonetis/domain/budgets";
+import type { CashForecastBudgetReserve } from "@openmonetis/domain/cash-forecast";
 import { getPeriodEndDate } from "@openmonetis/domain/transactions";
+import { getCurrentDateInBrazil } from "@openmonetis/shared/date-time";
 import type {
   BudgetOutput,
   CopyPreviousBudgetsInput,
@@ -38,6 +41,8 @@ type BudgetUpdateRecord = { amount?: string; period?: string };
 export type BudgetsRepository = {
   insertIfAbsent(data: BudgetCreateDraft): Promise<BudgetRecord | null>;
   listByUserAndPeriod(userId: string, period: string): Promise<BudgetWithCategoryRecord[]>;
+  /** Latest period before `period` that has at least one budget, or `null`. */
+  findLatestPeriodBefore(userId: string, period: string): Promise<string | null>;
   findByIdForUser(id: string, userId: string): Promise<BudgetWithCategoryRecord | null>;
   findByCategoryAndPeriodForUser(
     categoryId: string,
@@ -61,6 +66,7 @@ type BudgetCategoriesRepository = {
 export function createBudgetsService(
   repository: BudgetsRepository,
   categoriesRepository: BudgetCategoriesRepository,
+  today: () => string = getCurrentDateInBrazil,
 ) {
   async function expenseCategory(categoryId: string, userId: string) {
     const category = await categoriesRepository.findByIdForUser(categoryId, userId);
@@ -70,15 +76,23 @@ export function createBudgetsService(
     return category;
   }
 
-  async function list(userId: string, query: ListBudgetsQuery) {
-    const periodEnd = getPeriodEndDate(query.period);
-    const [budgetRows, spendingEntries, recurringRules] = await Promise.all([
-      repository.listByUserAndPeriod(userId, query.period),
-      repository.listSpendingEntries(userId, query.period),
-      repository.listRecurringRules(userId, periodEnd),
+  async function calculateOverview(
+    userId: string,
+    period: string,
+    budgetRows: Array<{ categoryId: string; amount: string }>,
+  ) {
+    const [spendingEntries, recurringRules] = await Promise.all([
+      repository.listSpendingEntries(userId, period),
+      repository.listRecurringRules(userId, getPeriodEndDate(period)),
     ]);
-    const spending = calculateBudgetSpending(spendingEntries, recurringRules, query.period);
-    const overview = calculateBudgetOverview(budgetRows, spending);
+    const referenceDay = today();
+    const spending = calculateBudgetSpending(spendingEntries, recurringRules, period, referenceDay);
+    return calculateBudgetOverview(budgetRows, spending, { period, today: referenceDay });
+  }
+
+  async function list(userId: string, query: ListBudgetsQuery) {
+    const budgetRows = await repository.listByUserAndPeriod(userId, query.period);
+    const overview = await calculateOverview(userId, query.period, budgetRows);
     const items = budgetRows
       .map((budget) =>
         toOutput(
@@ -86,6 +100,7 @@ export function createBudgetsService(
           overview.progressByCategory.get(budget.categoryId) as ReturnType<
             typeof calculateBudgetProgress
           >,
+          overview.dailyByCategory.get(budget.categoryId) ?? null,
         ),
       )
       .sort((left, right) => left.categoryName.localeCompare(right.categoryName, "pt-BR"));
@@ -102,12 +117,37 @@ export function createBudgetsService(
       unbudgetedCommittedAmount: overview.unbudgetedCommittedAmount,
       unbudgetedItems: overview.unbudgetedItems,
       warningCount: overview.warningCount,
+      level: overview.level,
+      daily: overview.daily,
       items,
     };
   }
 
+  /**
+   * Budget money still expected to be spent in a period. Periods without budgets inherit the
+   * limits of the latest earlier period with budgets, so the forecast is not blind to variable
+   * spending in months nobody planned yet.
+   */
+  async function projectReserve(
+    userId: string,
+    period: string,
+  ): Promise<CashForecastBudgetReserve> {
+    let budgetRows = await repository.listByUserAndPeriod(userId, period);
+    let estimated = false;
+    if (budgetRows.length === 0) {
+      const latestPeriod = await repository.findLatestPeriodBefore(userId, period);
+      if (!latestPeriod) return { period, amount: 0, estimated: false };
+      budgetRows = await repository.listByUserAndPeriod(userId, latestPeriod);
+      estimated = budgetRows.length > 0;
+    }
+    if (budgetRows.length === 0) return { period, amount: 0, estimated: false };
+    const overview = await calculateOverview(userId, period, budgetRows);
+    return { period, amount: overview.availableAmount, estimated };
+  }
+
   return {
     list,
+    projectReserve,
 
     async get(id: string, userId: string) {
       const budget = await repository.findByIdForUser(id, userId);
@@ -202,6 +242,7 @@ export function createBudgetsService(
 function toOutput(
   budget: BudgetWithCategoryRecord,
   progress: ReturnType<typeof calculateBudgetProgress>,
+  daily: BudgetDailyAllowance | null,
 ): BudgetOutput {
   return {
     id: budget.id,
@@ -211,6 +252,7 @@ function toOutput(
     period: budget.period,
     amount: Math.abs(Number(budget.amount)),
     ...progress,
+    daily,
     createdAt: budget.createdAt.toISOString(),
     updatedAt: budget.updatedAt.toISOString(),
   };

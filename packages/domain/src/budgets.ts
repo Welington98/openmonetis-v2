@@ -1,22 +1,25 @@
 import type { CardClosingRule } from "./cards";
-import { roundToTwoDecimals } from "./money";
+import { fromCents, roundToTwoDecimals, toCents } from "./money";
 import { getRecurringDueDate } from "./recurring-expenses";
 import { getOccurrenceAmount, type SettlementAwareRule } from "./settlements";
 import {
   addMonthsToPeriod,
   calculateExpenseImpact,
   deriveTransactionPeriod,
+  getPeriodEndDate,
   listRecurrenceDatesInPeriod,
   type PaymentMethod,
   type RecurrenceFrequency,
   type TransactionOrigin,
   type TransactionType,
 } from "./transactions";
+import { resolveUsageLevel, type UsageLevel, usageWarningThreshold } from "./usage-levels";
 
 export const budgetStatuses = ["onTrack", "warning", "reached", "exceeded"] as const;
 export type BudgetStatus = (typeof budgetStatuses)[number];
 
-export const budgetWarningThreshold = 80;
+/** Usage from which a budget is reported as close to its limit, aligned with the usage levels. */
+export const budgetWarningThreshold = usageWarningThreshold;
 
 export type BudgetCreateDraft = {
   userId: string;
@@ -30,6 +33,8 @@ export type BudgetSpendingEntry = {
   origin: TransactionOrigin;
   type: TransactionType;
   amount: string | number;
+  /** Purchase date (`YYYY-MM-DD`), used to know what was spent on the current day. */
+  purchaseDate?: string | null;
 };
 
 export type BudgetRecurringRule = SettlementAwareRule & {
@@ -54,6 +59,22 @@ export type BudgetProgress = {
   exceededAmount: number;
   usagePercentage: number;
   status: BudgetStatus;
+  level: UsageLevel;
+};
+
+/**
+ * How much of a monthly budget can still be spent per day. Recurring expenses already projected
+ * for the month are reserved first, so the allowance is what is left for variable spending.
+ */
+export type BudgetDailyAllowance = {
+  /** Amount available for each remaining day, today included, before today's spending. */
+  allowanceAmount: number;
+  spentTodayAmount: number;
+  remainingTodayAmount: number;
+  /** Even pace that would use exactly the monthly limit over the whole month. */
+  idealDailyAmount: number;
+  daysRemaining: number;
+  level: UsageLevel;
 };
 
 export type BudgetSpending = {
@@ -61,6 +82,8 @@ export type BudgetSpending = {
   projectedByCategory: Map<string, number>;
   uncategorizedActualAmount: number;
   uncategorizedProjectedAmount: number;
+  /** Expense impact of the entries purchased on the reference day, per category. */
+  todayByCategory?: Map<string, number>;
 };
 
 export type BudgetOverviewCalculation = {
@@ -76,6 +99,11 @@ export type BudgetOverviewCalculation = {
   unbudgetedCommittedAmount: number;
   unbudgetedItems: Array<{ categoryId: string | null; committedAmount: number }>;
   warningCount: number;
+  level: UsageLevel;
+  /** Daily allowance per budgeted category; empty for past periods or without a reference day. */
+  dailyByCategory: Map<string, BudgetDailyAllowance>;
+  /** Sum of every budget's daily allowance; `null` when no daily view applies. */
+  daily: BudgetDailyAllowance | null;
 };
 
 export function createBudgetDraft(input: {
@@ -115,15 +143,51 @@ export function calculateBudgetProgress(
     exceededAmount,
     usagePercentage,
     status,
+    level: resolveBudgetLevel(normalizedLimit, committedAmount),
   };
+}
+
+/**
+ * Derives the daily allowance of a monthly budget. Past periods have no daily view; future
+ * periods spread the remaining amount over the whole month; the current period spreads what was
+ * left at the start of today over the remaining days, so the allowance stays stable during the day.
+ */
+export function calculateDailyBudgetAllowance(input: {
+  limit: number;
+  committedAmount: number;
+  spentTodayAmount: number;
+  period: string;
+  today: string;
+}): BudgetDailyAllowance | null {
+  const todayPeriod = input.today.slice(0, 7);
+  if (input.period < todayPeriod) return null;
+
+  const daysInPeriod = getPeriodEndDate(input.period).getUTCDate();
+  const isCurrentPeriod = input.period === todayPeriod;
+  const daysRemaining = isCurrentPeriod
+    ? daysInPeriod - Number(input.today.slice(8, 10)) + 1
+    : daysInPeriod;
+  const limitCents = Math.max(0, toCents(input.limit));
+  const spentTodayCents = isCurrentPeriod ? Math.max(0, toCents(input.spentTodayAmount)) : 0;
+  const committedBeforeTodayCents = toCents(input.committedAmount) - spentTodayCents;
+  const availableCents = Math.max(0, limitCents - committedBeforeTodayCents);
+
+  return buildDailyAllowance({
+    allowanceCents: Math.floor(availableCents / daysRemaining),
+    spentTodayCents,
+    idealDailyCents: Math.floor(limitCents / daysInPeriod),
+    daysRemaining,
+  });
 }
 
 export function calculateBudgetSpending(
   entries: BudgetSpendingEntry[],
   recurringRules: BudgetRecurringRule[],
   period: string,
+  today?: string,
 ): BudgetSpending {
   const actualByCategory = new Map<string, number>();
+  const todayByCategory = new Map<string, number>();
   const projectedByCategory = new Map<string, number>();
   let uncategorizedActualAmount = 0;
   let uncategorizedProjectedAmount = 0;
@@ -139,6 +203,9 @@ export function calculateBudgetSpending(
     }
     if (entry.categoryId) addSignedAmount(actualByCategory, entry.categoryId, expenseImpact);
     else uncategorizedActualAmount += expenseImpact;
+    if (entry.categoryId && today && entry.purchaseDate === today) {
+      addSignedAmount(todayByCategory, entry.categoryId, expenseImpact);
+    }
   }
 
   for (const rule of recurringRules) {
@@ -190,14 +257,17 @@ export function calculateBudgetSpending(
     projectedByCategory: roundedMap(projectedByCategory),
     uncategorizedActualAmount: roundToTwoDecimals(uncategorizedActualAmount),
     uncategorizedProjectedAmount: roundToTwoDecimals(uncategorizedProjectedAmount),
+    todayByCategory: roundedMap(todayByCategory),
   };
 }
 
 export function calculateBudgetOverview(
   budgetLimits: Array<{ categoryId: string; amount: string | number }>,
   spending: BudgetSpending,
+  reference?: { period: string; today: string },
 ): BudgetOverviewCalculation {
   const progressByCategory = new Map<string, BudgetProgress>();
+  const dailyByCategory = new Map<string, BudgetDailyAllowance>();
   const budgetedCategoryIds = new Set(budgetLimits.map((budget) => budget.categoryId));
   let allocatedAmount = 0;
   let actualSpentAmount = 0;
@@ -215,6 +285,16 @@ export function calculateBudgetOverview(
       spending.projectedByCategory.get(budget.categoryId) ?? 0,
     );
     progressByCategory.set(budget.categoryId, progress);
+    const daily =
+      reference &&
+      calculateDailyBudgetAllowance({
+        limit: amount,
+        committedAmount: progress.committedAmount,
+        spentTodayAmount: spending.todayByCategory?.get(budget.categoryId) ?? 0,
+        period: reference.period,
+        today: reference.today,
+      });
+    if (daily) dailyByCategory.set(budget.categoryId, daily);
     allocatedAmount += amount;
     actualSpentAmount += progress.actualSpentAmount;
     projectedAmount += progress.projectedAmount;
@@ -267,6 +347,9 @@ export function calculateBudgetOverview(
     unbudgetedCommittedAmount: Math.max(0, unbudgetedCommittedAmount),
     unbudgetedItems: positiveUnbudgetedItems,
     warningCount,
+    level: resolveBudgetLevel(allocatedAmount, committedAmount),
+    dailyByCategory,
+    daily: sumDailyAllowances([...dailyByCategory.values()]),
   };
 }
 
@@ -279,6 +362,44 @@ function resolveBudgetStatus(limit: number, spent: number, usagePercentage: numb
   if (spent === limit && limit > 0) return "reached";
   if (usagePercentage >= budgetWarningThreshold) return "warning";
   return "onTrack";
+}
+
+function resolveBudgetLevel(limit: number, committed: number): UsageLevel {
+  if (limit <= 0) return resolveUsageLevel(null, committed);
+  return resolveUsageLevel((committed / limit) * 100, committed);
+}
+
+function buildDailyAllowance(input: {
+  allowanceCents: number;
+  spentTodayCents: number;
+  idealDailyCents: number;
+  daysRemaining: number;
+}): BudgetDailyAllowance {
+  const { allowanceCents, spentTodayCents } = input;
+  return {
+    allowanceAmount: fromCents(allowanceCents),
+    spentTodayAmount: fromCents(spentTodayCents),
+    remainingTodayAmount: fromCents(Math.max(0, allowanceCents - spentTodayCents)),
+    idealDailyAmount: fromCents(input.idealDailyCents),
+    daysRemaining: input.daysRemaining,
+    level:
+      allowanceCents > 0
+        ? resolveUsageLevel((spentTodayCents / allowanceCents) * 100, spentTodayCents)
+        : resolveUsageLevel(null, spentTodayCents),
+  };
+}
+
+function sumDailyAllowances(allowances: BudgetDailyAllowance[]): BudgetDailyAllowance | null {
+  const [first] = allowances;
+  if (!first) return null;
+  const sum = (pick: (allowance: BudgetDailyAllowance) => number) =>
+    allowances.reduce((total, allowance) => total + toCents(pick(allowance)), 0);
+  return buildDailyAllowance({
+    allowanceCents: sum((allowance) => allowance.allowanceAmount),
+    spentTodayCents: sum((allowance) => allowance.spentTodayAmount),
+    idealDailyCents: sum((allowance) => allowance.idealDailyAmount),
+    daysRemaining: first.daysRemaining,
+  });
 }
 
 function addAmount(totals: Map<string, number>, categoryId: string, amount: string | number) {
