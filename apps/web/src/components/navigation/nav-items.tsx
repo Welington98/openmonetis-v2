@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   CalendarClock,
+  CalendarRange,
   CreditCard,
   FileChartColumn,
   Gauge,
@@ -165,6 +166,13 @@ export const navSections: NavSection[] = [
         label: "Compromissos futuros",
         description: "Quanto da renda já está comprometido",
         icon: <Gauge className="size-4" aria-hidden="true" />,
+        preservePeriod: true,
+      },
+      {
+        href: "/reports/cash-forecast",
+        label: "Projeção de saldo",
+        description: "Saldo mês a mês e simulações de compra",
+        icon: <CalendarRange className="size-4" aria-hidden="true" />,
         preservePeriod: true,
       },
       {

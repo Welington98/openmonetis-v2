@@ -1,0 +1,2 @@
+ALTER TABLE "user_preferences" ADD COLUMN "forecast_minimum_balance" numeric(12, 2);--> statement-breakpoint
+ALTER TABLE "user_preferences" ADD CONSTRAINT "user_preferences_forecast_minimum_balance_check" CHECK ("user_preferences"."forecast_minimum_balance" is null or "user_preferences"."forecast_minimum_balance" >= 0);

@@ -34,6 +34,8 @@
   --color-success: var(--success);
   --color-teal: var(--teal);
   --color-warning: var(--warning);
+  --color-attention: var(--attention);
+  --color-caution: var(--caution);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-foreground: var(--brand-foreground);
@@ -90,6 +92,9 @@
   /* Payoff simulations, kept apart from the blue of purchase simulations. */
   --teal: color-mix(in srgb, var(--palette-teal) 85%, var(--palette-charcoal));
   --warning: color-mix(in srgb, var(--palette-coral) 42%, var(--palette-charcoal));
+  /* Usage levels: green (success) → yellow (attention) → orange (caution) → red (destructive). */
+  --attention: oklch(60% 0.125 92);
+  --caution: oklch(60% 0.165 48);
   --brand: var(--palette-coral);
   --brand-strong: color-mix(in srgb, var(--palette-coral) 45%, var(--palette-charcoal));
   --brand-foreground: var(--palette-charcoal);
@@ -186,6 +191,8 @@
   --success: oklch(71% 0.11 150);
   --teal: oklch(76% 0.095 188);
   --warning: oklch(81% 0.105 72);
+  --attention: oklch(85% 0.13 95);
+  --caution: oklch(74% 0.15 52);
   --brand-strong: oklch(74.5% 0.135 58);
   --brand: var(--brand-strong);
   --brand-foreground: var(--palette-charcoal);

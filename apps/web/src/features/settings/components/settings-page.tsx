@@ -2,6 +2,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
   CalendarClock,
   Database,
+  Gauge,
   Plug,
   Settings,
   ShieldCheck,
@@ -13,6 +14,7 @@ import { Navbar } from "@/components/navigation/navbar";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DueDateRulesPage } from "@/features/due-date-rules/components/due-date-rules-page";
+import { DailyBudgetSettings } from "@/features/expense-natures/components/daily-budget-settings";
 import { PreferencesForm } from "@/features/preferences/components/preferences-form";
 import { type SettingsTab, settingsTabs } from "../settings.presentation";
 import { AccountDataSettings } from "./account-data-settings";
@@ -23,6 +25,7 @@ import { SecuritySettings } from "./security-settings";
 const tabItems = [
   { value: "profile", label: "Perfil", icon: UserRound },
   { value: "preferences", label: "Preferências", icon: SlidersHorizontal },
+  { value: "daily-budget", label: "Orçamento diário", icon: Gauge },
   { value: "due-date-rules", label: "Regras de vencimento", icon: CalendarClock },
   { value: "security", label: "Segurança", icon: ShieldCheck },
   { value: "integrations", label: "Integrações", icon: Plug },
@@ -99,6 +102,9 @@ export function SettingsPage() {
             </TabsContent>
             <TabsContent className="pt-5" value="preferences">
               <PreferencesForm />
+            </TabsContent>
+            <TabsContent className="pt-5" value="daily-budget">
+              <DailyBudgetSettings />
             </TabsContent>
             <TabsContent className="pt-5" value="due-date-rules">
               <DueDateRulesPage />

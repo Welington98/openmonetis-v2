@@ -1,26 +1,21 @@
 import { formatDateInBrazil, periodToSafeInstant } from "@openmonetis/shared/date-time";
 import type { BudgetOutput } from "@openmonetis/validators/budgets";
 
-export const budgetStatusLabels: Record<BudgetOutput["status"], string> = {
-  onTrack: "Dentro do limite",
-  warning: "Atenção",
-  reached: "Limite atingido",
-  exceeded: "Limite excedido",
+export const budgetLevelLabels: Record<BudgetOutput["level"], string> = {
+  healthy: "Dentro do limite",
+  attention: "Atenção",
+  warning: "Quase no limite",
+  critical: "Limite excedido",
 };
 
-export const budgetStatusStyles: Record<BudgetOutput["status"], string> = {
-  onTrack: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
-  reached: "bg-warning/10 text-warning",
-  exceeded: "bg-destructive/10 text-destructive",
-};
+/** Badge label: the level, except for a budget used to the cent, which is called out as such. */
+export function getBudgetLevelLabel(budget: Pick<BudgetOutput, "level" | "status">) {
+  return budget.status === "reached" ? "Limite atingido" : budgetLevelLabels[budget.level];
+}
 
-export const budgetProgressStyles: Record<BudgetOutput["status"], string> = {
-  onTrack: "bg-success",
-  warning: "bg-warning",
-  reached: "bg-warning",
-  exceeded: "bg-destructive",
-};
+export function formatDailyAllowanceDays(daysRemaining: number) {
+  return daysRemaining === 1 ? "último dia do mês" : `${daysRemaining} dias restantes`;
+}
 
 export function formatBudgetPercentage(value: number) {
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(value);

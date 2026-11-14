@@ -1,7 +1,9 @@
 import { z } from "@hono/zod-openapi";
 import { budgetStatuses } from "@openmonetis/domain/budgets";
+import { usageLevels } from "@openmonetis/domain/usage-levels";
 
 export { budgetStatuses } from "@openmonetis/domain/budgets";
+export { usageLevels } from "@openmonetis/domain/usage-levels";
 
 const periodSchema = z.string().regex(/^[1-9]\d{3}-(0[1-9]|1[0-2])$/);
 const amountSchema = z.number().finite().multipleOf(0.01).positive().max(9_999_999_999.99);
@@ -43,6 +45,17 @@ export const BudgetParamsSchema = z
   .object({ id: z.uuid().openapi({ param: { name: "id", in: "path" } }) })
   .openapi("BudgetParams");
 
+export const BudgetDailyAllowanceOutputSchema = z
+  .object({
+    allowanceAmount: z.number().nonnegative(),
+    spentTodayAmount: z.number().nonnegative(),
+    remainingTodayAmount: z.number().nonnegative(),
+    idealDailyAmount: z.number().nonnegative(),
+    daysRemaining: z.number().int().positive(),
+    level: z.enum(usageLevels),
+  })
+  .openapi("BudgetDailyAllowance");
+
 export const BudgetOutputSchema = z
   .object({
     id: z.uuid(),
@@ -58,6 +71,10 @@ export const BudgetOutputSchema = z
     exceededAmount: z.number().nonnegative(),
     usagePercentage: z.number().nonnegative(),
     status: z.enum(budgetStatuses),
+    level: z.enum(usageLevels),
+    fixedAmount: z.number().nonnegative(),
+    variableAmount: z.number().nonnegative(),
+    daily: BudgetDailyAllowanceOutputSchema.nullable(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
   })
@@ -72,6 +89,8 @@ export const BudgetOverviewOutputSchema = z
     committedAmount: z.number().nonnegative(),
     availableAmount: z.number().nonnegative(),
     exceededAmount: z.number().nonnegative(),
+    fixedAmount: z.number().nonnegative(),
+    variableAmount: z.number().nonnegative(),
     usagePercentage: z.number().nonnegative(),
     unbudgetedCommittedAmount: z.number().nonnegative(),
     unbudgetedItems: z.array(
@@ -81,6 +100,8 @@ export const BudgetOverviewOutputSchema = z
       }),
     ),
     warningCount: z.number().int().nonnegative(),
+    level: z.enum(usageLevels),
+    daily: BudgetDailyAllowanceOutputSchema.nullable(),
     items: z.array(BudgetOutputSchema),
   })
   .openapi("BudgetOverview");
@@ -96,6 +117,7 @@ export type CreateBudgetInput = z.infer<typeof CreateBudgetInputSchema>;
 export type UpdateBudgetInput = z.infer<typeof UpdateBudgetInputSchema>;
 export type CopyPreviousBudgetsInput = z.infer<typeof CopyPreviousBudgetsInputSchema>;
 export type ListBudgetsQuery = z.infer<typeof ListBudgetsQuerySchema>;
+export type BudgetDailyAllowanceOutput = z.infer<typeof BudgetDailyAllowanceOutputSchema>;
 export type BudgetOutput = z.infer<typeof BudgetOutputSchema>;
 export type BudgetOverviewOutput = z.infer<typeof BudgetOverviewOutputSchema>;
 export type CopyPreviousBudgetsOutput = z.infer<typeof CopyPreviousBudgetsOutputSchema>;

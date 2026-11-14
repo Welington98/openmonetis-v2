@@ -225,6 +225,27 @@
       "when": 1794074588197,
       "tag": "0031_person_report_schedules",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794626810754,
+      "tag": "0032_forecast_simulations",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794655279211,
+      "tag": "0033_forecast_minimum_balance",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794656866056,
+      "tag": "0034_expense_natures",
+      "breakpoints": true
     }
   ]
 }

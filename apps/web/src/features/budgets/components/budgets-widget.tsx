@@ -15,13 +15,14 @@ import { DashboardWidgetEmptyState } from "@/features/dashboard/components/dashb
 import { dashboardWidgetFooterNavigationLinkClassName } from "@/features/dashboard/components/dashboard-widget-footer-link";
 import { DashboardWidgetListSheet } from "@/features/dashboard/components/dashboard-widget-list-sheet";
 import { DashboardWidgetRow } from "@/features/dashboard/components/dashboard-widget-row";
+import {
+  usageLevelBarStyles,
+  usageLevelTextStyles,
+  usageLevelTrackStyles,
+} from "@/lib/usage-level-presentation";
 import { cn } from "@/lib/utils";
 import { useUpdateBudgetMutation } from "../budgets.mutations";
-import {
-  budgetProgressStyles,
-  formatBudgetPercentage,
-  getBudgetWidgetItems,
-} from "../budgets.presentation";
+import { formatBudgetPercentage, getBudgetWidgetItems } from "../budgets.presentation";
 import { budgetsQueryOptions } from "../budgets.queries";
 import { BudgetDialog } from "./budget-dialog";
 
@@ -105,7 +106,33 @@ export function BudgetsWidget({ period }: { period: string }) {
               title="Nenhum orçamento neste mês"
             />
           ) : (
-            <BudgetProgressList items={visibleItems} onEdit={editBudget} period={period} />
+            <div className="grid gap-3">
+              {query.data.daily ? (
+                <p className="flex flex-wrap items-baseline justify-between gap-x-3 rounded-md bg-muted/60 px-3 py-2 text-sm">
+                  <span className="text-muted-foreground">Pode gastar por dia</span>
+                  <span className="flex items-baseline gap-1.5">
+                    <MoneyValue
+                      amount={query.data.daily.allowanceAmount}
+                      className={cn(
+                        "font-medium",
+                        query.data.daily.spentTodayAmount > 0 &&
+                          usageLevelTextStyles[query.data.daily.level],
+                      )}
+                    />
+                    {query.data.daily.spentTodayAmount > 0 ? (
+                      <span className="text-muted-foreground text-xs">
+                        hoje{" "}
+                        <MoneyValue
+                          amount={query.data.daily.spentTodayAmount}
+                          className="text-xs"
+                        />
+                      </span>
+                    ) : null}
+                  </span>
+                </p>
+              ) : null}
+              <BudgetProgressList items={visibleItems} onEdit={editBudget} period={period} />
+            </div>
           )
         ) : null}
       </DashboardWidget>
@@ -183,9 +210,7 @@ function BudgetProgressRow({
               <span
                 className={cn(
                   "font-medium text-xs tabular-nums",
-                  budget.status === "onTrack" && "text-success",
-                  (budget.status === "warning" || budget.status === "reached") && "text-warning",
-                  exceeded && "text-destructive",
+                  usageLevelTextStyles[budget.level],
                 )}
               >
                 {percentage}%
@@ -221,12 +246,10 @@ function BudgetProgressRow({
         </div>
         <Progress
           aria-label={`${percentage}% do orçamento de ${budget.categoryName} comprometido`}
-          indicatorClassName={budgetProgressStyles[budget.status]}
+          indicatorClassName={usageLevelBarStyles[budget.level]}
           trackClassName={cn(
             "h-1",
-            budget.status === "warning" && "bg-warning/20",
-            budget.status === "reached" && "bg-warning/20",
-            exceeded && "bg-destructive/20",
+            budget.level !== "healthy" && usageLevelTrackStyles[budget.level],
           )}
           value={Math.min(budget.usagePercentage, 100)}
         />

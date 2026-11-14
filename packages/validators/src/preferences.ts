@@ -36,6 +36,15 @@ export const UserPreferencesOutputSchema = z
     transactionsPageSize: TransactionsPageSizeSchema,
     mobileShortcut: z.enum(mobileShortcutDestinations),
     startPage: z.enum(startPageDestinations),
+    forecastMinimumBalance: z
+      .number()
+      .finite()
+      .multipleOf(0.01)
+      .nonnegative()
+      .max(9_999_999_999.99)
+      .nullable(),
+    installmentsAreFixed: z.boolean(),
+    recurringAreFixed: z.boolean(),
   })
   .openapi("UserPreferencesOutput");
 

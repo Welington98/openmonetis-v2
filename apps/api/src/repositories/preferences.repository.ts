@@ -15,6 +15,9 @@ export const preferencesRepository = {
         transactionsPageSize: userPreferences.transactionsPageSize,
         mobileShortcut: userPreferences.mobileShortcut,
         startPage: userPreferences.startPage,
+        forecastMinimumBalance: userPreferences.forecastMinimumBalance,
+        installmentsAreFixed: userPreferences.installmentsAreFixed,
+        recurringAreFixed: userPreferences.recurringAreFixed,
       })
       .from(userPreferences)
       .leftJoin(
@@ -64,12 +67,16 @@ export const preferencesRepository = {
   },
 
   async saveForUser(userId, preferences) {
+    const values = {
+      ...preferences,
+      forecastMinimumBalance: preferences.forecastMinimumBalance?.toFixed(2) ?? null,
+    };
     await db
       .insert(userPreferences)
-      .values({ userId, ...preferences })
+      .values({ userId, ...values })
       .onConflictDoUpdate({
         target: userPreferences.userId,
-        set: { ...preferences, updatedAt: new Date() },
+        set: { ...values, updatedAt: new Date() },
       });
   },
 

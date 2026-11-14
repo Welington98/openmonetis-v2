@@ -23,6 +23,7 @@ import type {
   DueDateAdjustmentDetails,
   DueDateRuleVersion,
 } from "@openmonetis/domain/due-date-rules";
+import { expenseNatures } from "@openmonetis/domain/expense-natures";
 import {
   personReportDeliveryStatuses,
   personReportDeliveryTriggers,
@@ -60,6 +61,7 @@ export const accountType = pgEnum("account_type", [
 ]);
 
 export const applicationTheme = pgEnum("application_theme", ["system", "light", "dark"]);
+export const expenseNature = pgEnum("expense_nature", expenseNatures);
 
 export const mobileShortcutDestination = pgEnum("mobile_shortcut_destination", [
   "accounts",
@@ -581,6 +583,9 @@ export const userPreferences = pgTable(
     transactionsPageSize: integer("transactions_page_size").notNull().default(30),
     mobileShortcut: mobileShortcutDestination("mobile_shortcut").notNull().default("accounts"),
     startPage: startPageDestination("start_page").notNull().default("dashboard"),
+    forecastMinimumBalance: numeric("forecast_minimum_balance", { precision: 12, scale: 2 }),
+    installmentsAreFixed: boolean("installments_are_fixed").notNull().default(true),
+    recurringAreFixed: boolean("recurring_are_fixed").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
       .notNull()
@@ -597,6 +602,10 @@ export const userPreferences = pgTable(
     check(
       "user_preferences_transactions_page_size_check",
       sql`${table.transactionsPageSize} in (20, 30, 50)`,
+    ),
+    check(
+      "user_preferences_forecast_minimum_balance_check",
+      sql`${table.forecastMinimumBalance} is null or ${table.forecastMinimumBalance} >= 0`,
     ),
   ],
 );
@@ -2146,6 +2155,66 @@ export const budgets = pgTable(
   ],
 );
 
+/** Categories whose expenses are always fixed or always variable, whatever their condition. */
+export const expenseCategoryNatures = pgTable(
+  "expense_category_natures",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    nature: expenseNature("nature").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.categoryId] }),
+    index("expense_category_natures_category_id_idx").on(table.categoryId),
+    foreignKey({
+      name: "expense_category_natures_category_id_user_id_categories_fk",
+      columns: [table.categoryId, table.userId],
+      foreignColumns: [categories.id, categories.userId],
+    }).onDelete("cascade"),
+  ],
+);
+
+export const forecastSimulations = pgTable(
+  "forecast_simulations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    description: varchar("description", { length: 120 }).notNull(),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    installmentCount: integer("installment_count").notNull().default(1),
+    firstPeriod: varchar("first_period", { length: 7 }).notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("forecast_simulations_user_id_idx").on(table.userId, table.createdAt),
+    check("forecast_simulations_amount_positive_check", sql`${table.amount} > 0`),
+    check(
+      "forecast_simulations_installment_count_check",
+      sql`${table.installmentCount} BETWEEN 1 AND 60`,
+    ),
+    check(
+      "forecast_simulations_first_period_format_check",
+      sql`${table.firstPeriod} ~ '^[1-9][0-9]{3}-(0[1-9]|1[0-2])$'`,
+    ),
+  ],
+);
+
 export const goalTrackingType = pgEnum("goal_tracking_type", ["manual", "account"]);
 export const goalStatus = pgEnum("goal_status", ["active", "paused", "completed", "archived"]);
 
@@ -2582,6 +2651,10 @@ export const budgetsRelations = relations(budgets, ({ one }) => ({
     fields: [budgets.categoryId],
     references: [categories.id],
   }),
+}));
+
+export const forecastSimulationsRelations = relations(forecastSimulations, ({ one }) => ({
+  user: one(user, { fields: [forecastSimulations.userId], references: [user.id] }),
 }));
 
 export const goalsRelations = relations(goals, ({ one }) => ({

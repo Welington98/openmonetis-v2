@@ -24,10 +24,8 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  budgetProgressStyles,
-  formatBudgetPercentage,
-} from "@/features/budgets/budgets.presentation";
+import { formatBudgetPercentage } from "@/features/budgets/budgets.presentation";
+import { usageLevelBarStyles } from "@/lib/usage-level-presentation";
 import {
   type CategoryMonthSummary,
   getCategoryGroups,
@@ -180,7 +178,7 @@ function CategoryMonthValue({
         </p>
         <Progress
           aria-label={`${formatBudgetPercentage(budget.usagePercentage)}% do orçamento de ${name} comprometido`}
-          indicatorClassName={budgetProgressStyles[budget.status]}
+          indicatorClassName={usageLevelBarStyles[budget.level]}
           trackClassName="h-1.5"
           value={Math.min(budget.usagePercentage, 100)}
         />

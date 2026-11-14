@@ -34,6 +34,7 @@ import { Route as CategoriesCategoryIdRouteImport } from './routes/categories_.$
 import { Route as PeoplePersonIdRouteImport } from './routes/people_.$personId'
 import { Route as PersonConnectionsAcceptRouteImport } from './routes/person-connections.accept'
 import { Route as ReportsAiDiagnosesRouteImport } from './routes/reports/ai-diagnoses'
+import { Route as ReportsCashForecastRouteImport } from './routes/reports/cash-forecast'
 import { Route as ReportsCategoryTrendsRouteImport } from './routes/reports/category-trends'
 import { Route as ReportsCommitmentsRouteImport } from './routes/reports/commitments'
 import { Route as ReportsFinancialDistributionRouteImport } from './routes/reports/financial-distribution'
@@ -167,6 +168,11 @@ const ReportsAiDiagnosesRoute = ReportsAiDiagnosesRouteImport.update({
   path: '/reports/ai-diagnoses',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsCashForecastRoute = ReportsCashForecastRouteImport.update({
+  id: '/reports/cash-forecast',
+  path: '/reports/cash-forecast',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsCategoryTrendsRoute = ReportsCategoryTrendsRouteImport.update({
   id: '/reports/category-trends',
   path: '/reports/category-trends',
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/person-connections/accept': typeof PersonConnectionsAcceptRoute
   '/reports/ai-diagnoses': typeof ReportsAiDiagnosesRoute
+  '/reports/cash-forecast': typeof ReportsCashForecastRoute
   '/reports/category-trends': typeof ReportsCategoryTrendsRoute
   '/reports/commitments': typeof ReportsCommitmentsRoute
   '/reports/financial-distribution': typeof ReportsFinancialDistributionRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/person-connections/accept': typeof PersonConnectionsAcceptRoute
   '/reports/ai-diagnoses': typeof ReportsAiDiagnosesRoute
+  '/reports/cash-forecast': typeof ReportsCashForecastRoute
   '/reports/category-trends': typeof ReportsCategoryTrendsRoute
   '/reports/commitments': typeof ReportsCommitmentsRoute
   '/reports/financial-distribution': typeof ReportsFinancialDistributionRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/people_/$personId': typeof PeoplePersonIdRoute
   '/person-connections/accept': typeof PersonConnectionsAcceptRoute
   '/reports/ai-diagnoses': typeof ReportsAiDiagnosesRoute
+  '/reports/cash-forecast': typeof ReportsCashForecastRoute
   '/reports/category-trends': typeof ReportsCategoryTrendsRoute
   '/reports/commitments': typeof ReportsCommitmentsRoute
   '/reports/financial-distribution': typeof ReportsFinancialDistributionRoute
@@ -337,6 +346,7 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/person-connections/accept'
     | '/reports/ai-diagnoses'
+    | '/reports/cash-forecast'
     | '/reports/category-trends'
     | '/reports/commitments'
     | '/reports/financial-distribution'
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/person-connections/accept'
     | '/reports/ai-diagnoses'
+    | '/reports/cash-forecast'
     | '/reports/category-trends'
     | '/reports/commitments'
     | '/reports/financial-distribution'
@@ -405,6 +416,7 @@ export interface FileRouteTypes {
     | '/people_/$personId'
     | '/person-connections/accept'
     | '/reports/ai-diagnoses'
+    | '/reports/cash-forecast'
     | '/reports/category-trends'
     | '/reports/commitments'
     | '/reports/financial-distribution'
@@ -440,6 +452,7 @@ export interface RootRouteChildren {
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   PersonConnectionsAcceptRoute: typeof PersonConnectionsAcceptRoute
   ReportsAiDiagnosesRoute: typeof ReportsAiDiagnosesRoute
+  ReportsCashForecastRoute: typeof ReportsCashForecastRoute
   ReportsCategoryTrendsRoute: typeof ReportsCategoryTrendsRoute
   ReportsCommitmentsRoute: typeof ReportsCommitmentsRoute
   ReportsFinancialDistributionRoute: typeof ReportsFinancialDistributionRoute
@@ -626,6 +639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsAiDiagnosesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/cash-forecast': {
+      id: '/reports/cash-forecast'
+      path: '/reports/cash-forecast'
+      fullPath: '/reports/cash-forecast'
+      preLoaderRoute: typeof ReportsCashForecastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports/category-trends': {
       id: '/reports/category-trends'
       path: '/reports/category-trends'
@@ -704,6 +724,7 @@ const rootRouteChildren: RootRouteChildren = {
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   PersonConnectionsAcceptRoute: PersonConnectionsAcceptRoute,
   ReportsAiDiagnosesRoute: ReportsAiDiagnosesRoute,
+  ReportsCashForecastRoute: ReportsCashForecastRoute,
   ReportsCategoryTrendsRoute: ReportsCategoryTrendsRoute,
   ReportsCommitmentsRoute: ReportsCommitmentsRoute,
   ReportsFinancialDistributionRoute: ReportsFinancialDistributionRoute,

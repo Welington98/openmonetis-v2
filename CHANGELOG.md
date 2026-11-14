@@ -7,6 +7,38 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+
+- **Orçamentos** mostram quanto ainda é possível gastar por dia em cada categoria e no total do
+  mês, depois de reservar as recorrências previstas, com o gasto de hoje e os dias restantes.
+- Nova tela **Relatórios → Projeção de saldo**: planilha mês a mês (6 a 24 meses) com saldo
+  inicial, receitas, compromissos, orçamento a gastar, simulações e saldo final, colorida por
+  faixa e com o menor saldo e o primeiro mês negativo.
+- **Simulações de compra** salvas, à vista ou parceladas, que podem ser ativadas ou desativadas
+  para comparar a projeção com e sem uma compra por impulso, sem criar lançamentos.
+- Aba **Diária** na Projeção de saldo: saldo ao fim de cada dia, com dias realizados marcados,
+  gastos variáveis previstos pelo orçamento, contas, receitas e faturas no dia do vencimento e
+  detalhes de cada dia; cores pelo **saldo mínimo**, automático ou definido pelo usuário.
+- Nova aba **Ajustes → Orçamento diário**: escolhe se parceladas e recorrentes são fixas, marca
+  categorias como sempre fixas ou sempre variáveis e define o saldo mínimo da projeção diária.
+  Despesas fixas ficam reservadas no mês e não contam como gasto do dia; os cards de orçamento
+  mostram a parte fixa e a variável.
+- Endpoints `GET /reports/cash-forecast`, `GET /reports/cash-forecast/daily`, `/expense-natures` e
+  `/forecast-simulations`, campos `level` e `daily` no contrato de orçamentos e preferência
+  `forecastMinimumBalance`, `installmentsAreFixed` e `recurringAreFixed`.
+
+### Alterado
+
+- Orçamentos passam a usar quatro faixas de cor: verde abaixo de 70%, amarelo até 90%, laranja até
+  100% e vermelho acima do limite. O status `warning` (alertas e notificações) passa a valer a
+  partir de 90%, em vez de 80%.
+
+### Notas de atualização
+
+- A migration `0032_forecast_simulations` cria a tabela `forecast_simulations` e a
+  `0033_forecast_minimum_balance` adiciona `forecast_minimum_balance` às preferências; a
+  `0034_expense_natures` cria `expense_category_natures` e as regras por tipo nas preferências.
+
 ## [0.17.1] - 2026-11-11
 
 O desfoque translúcido do cabeçalho, dos menus e dos painéis volta a aparecer em Chrome, Edge e

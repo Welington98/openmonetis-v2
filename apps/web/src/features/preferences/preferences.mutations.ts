@@ -13,6 +13,8 @@ function usePreferenceMutationCache() {
   return (preferences: UserPreferencesOutput) => {
     queryClient.setQueryData(preferenceKeys.all, preferences);
     void queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    // The daily cash forecast colors days by the minimum balance preference.
+    void queryClient.invalidateQueries({ queryKey: ["cash-forecast"] });
   };
 }
 

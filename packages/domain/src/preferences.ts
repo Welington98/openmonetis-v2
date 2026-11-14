@@ -39,6 +39,11 @@ export type UserPreferences = {
   transactionsPageSize: TransactionPageSize;
   mobileShortcut: MobileShortcutDestination;
   startPage: StartPageDestination;
+  /** Balance the user wants to keep in the daily forecast; `null` uses the automatic value. */
+  forecastMinimumBalance: number | null;
+  /** Rule by condition of the expense nature used by the daily budget. */
+  installmentsAreFixed: boolean;
+  recurringAreFixed: boolean;
 };
 
 export type UserPreferencesRecord = {
@@ -51,6 +56,9 @@ export type UserPreferencesRecord = {
   transactionsPageSize: number;
   mobileShortcut: string;
   startPage: string;
+  forecastMinimumBalance?: string | number | null;
+  installmentsAreFixed?: boolean;
+  recurringAreFixed?: boolean;
 };
 
 const applicationThemeSet = new Set<string>(applicationThemes);
@@ -71,6 +79,9 @@ export function createDefaultUserPreferences(): UserPreferences {
     transactionsPageSize: 30,
     mobileShortcut: "accounts",
     startPage: "dashboard",
+    forecastMinimumBalance: null,
+    installmentsAreFixed: true,
+    recurringAreFixed: true,
   };
 }
 
@@ -108,5 +119,20 @@ export function normalizeUserPreferences(
     startPage: startPageDestinationSet.has(preferences.startPage ?? "")
       ? (preferences.startPage as StartPageDestination)
       : defaults.startPage,
+    forecastMinimumBalance: normalizeMinimumBalance(preferences.forecastMinimumBalance),
+    installmentsAreFixed:
+      typeof preferences.installmentsAreFixed === "boolean"
+        ? preferences.installmentsAreFixed
+        : defaults.installmentsAreFixed,
+    recurringAreFixed:
+      typeof preferences.recurringAreFixed === "boolean"
+        ? preferences.recurringAreFixed
+        : defaults.recurringAreFixed,
   };
+}
+
+function normalizeMinimumBalance(value: string | number | null | undefined) {
+  if (value === null || value === undefined) return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) / 100 : null;
 }
