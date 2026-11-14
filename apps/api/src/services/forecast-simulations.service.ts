@@ -53,7 +53,8 @@ export function createForecastSimulationsService(repository: ForecastSimulations
     async listActive(userId: string) {
       return (await repository.listForUser(userId))
         .filter((simulation) => simulation.isActive)
-        .map(({ amount, installmentCount, firstPeriod }) => ({
+        .map(({ description, amount, installmentCount, firstPeriod }) => ({
+          label: description,
           amount,
           installmentCount,
           firstPeriod,

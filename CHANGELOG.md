@@ -16,8 +16,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   faixa e com o menor saldo e o primeiro mês negativo.
 - **Simulações de compra** salvas, à vista ou parceladas, que podem ser ativadas ou desativadas
   para comparar a projeção com e sem uma compra por impulso, sem criar lançamentos.
-- Endpoints `GET /reports/cash-forecast` e `/forecast-simulations`, e campos `level` e `daily` no
-  contrato de orçamentos.
+- Aba **Diária** na Projeção de saldo: saldo ao fim de cada dia, com dias realizados marcados,
+  gastos variáveis previstos pelo orçamento, contas, receitas e faturas no dia do vencimento e
+  detalhes de cada dia; cores pelo **saldo mínimo**, automático ou definido pelo usuário.
+- Endpoints `GET /reports/cash-forecast`, `GET /reports/cash-forecast/daily` e
+  `/forecast-simulations`, campos `level` e `daily` no contrato de orçamentos e preferência
+  `forecastMinimumBalance`.
 
 ### Alterado
 
@@ -27,7 +31,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Notas de atualização
 
-- A migration `0032_forecast_simulations` cria a tabela `forecast_simulations`.
+- A migration `0032_forecast_simulations` cria a tabela `forecast_simulations` e a
+  `0033_forecast_minimum_balance` adiciona `forecast_minimum_balance` às preferências.
 
 ## [0.17.1] - 2026-11-11
 

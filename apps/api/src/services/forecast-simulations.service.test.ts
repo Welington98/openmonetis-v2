@@ -83,7 +83,7 @@ test("only active simulations feed the forecast and toggling keeps the draft", a
   assert.ok(paused);
   await f.service.update(paused.id, "owner", { isActive: false });
   assert.deepEqual(await f.service.listActive("owner"), [
-    { amount: "900.00", installmentCount: 3, firstPeriod: "2027-01" },
+    { label: "Viagem", amount: "900.00", installmentCount: 3, firstPeriod: "2027-01" },
   ]);
   assert.equal((await f.service.list("owner")).length, 2);
   assert.equal(kept.isActive, true);

@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 import {
+  cashEventKinds,
+  cashForecastDayStatuses,
   defaultCashForecastMonths,
   maxCashForecastMonths,
 } from "@openmonetis/domain/cash-forecast";
@@ -55,3 +57,50 @@ export const CashForecastOutputSchema = z
 export type CashForecastQuery = z.infer<typeof CashForecastQuerySchema>;
 export type CashForecastMonthOutput = z.infer<typeof CashForecastMonthOutputSchema>;
 export type CashForecastOutput = z.infer<typeof CashForecastOutputSchema>;
+
+export const DailyCashForecastQuerySchema = z
+  .object({
+    period: periodSchema.openapi({ param: { name: "period", in: "query" }, example: "2026-11" }),
+  })
+  .openapi("DailyCashForecastQuery");
+
+export const CashEventOutputSchema = z
+  .object({
+    date: z.iso.date(),
+    amount: z.number(),
+    kind: z.enum(cashEventKinds),
+    label: z.string(),
+  })
+  .openapi("CashEvent");
+
+export const CashForecastDayOutputSchema = z
+  .object({
+    date: z.iso.date(),
+    status: z.enum(cashForecastDayStatuses),
+    dailyAmount: z.number().nonnegative().nullable(),
+    incomeAmount: z.number().nonnegative(),
+    expenseAmount: z.number().nonnegative(),
+    simulationAmount: z.number().nonnegative(),
+    closingBalance: z.number(),
+    level: z.enum(usageLevels),
+    events: z.array(CashEventOutputSchema),
+  })
+  .openapi("CashForecastDay");
+
+export const DailyCashForecastOutputSchema = z
+  .object({
+    period: periodSchema,
+    today: z.iso.date(),
+    openingBalance: z.number(),
+    minimumBalance: z.number().nonnegative(),
+    minimumBalanceSource: z.enum(["automatic", "custom"]),
+    budgetEstimated: z.boolean(),
+    days: z.array(CashForecastDayOutputSchema),
+    lowestBalance: z.object({ date: z.iso.date(), amount: z.number() }).nullable(),
+    firstNegativeDate: z.iso.date().nullable(),
+  })
+  .openapi("DailyCashForecast");
+
+export type DailyCashForecastQuery = z.infer<typeof DailyCashForecastQuerySchema>;
+export type CashForecastDayOutput = z.infer<typeof CashForecastDayOutputSchema>;
+export type DailyCashForecastOutput = z.infer<typeof DailyCashForecastOutputSchema>;

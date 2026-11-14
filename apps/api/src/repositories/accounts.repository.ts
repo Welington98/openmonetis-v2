@@ -419,6 +419,7 @@ export const accountsRepository = {
         .select({
           id: recurringTransactionRules.id,
           seriesId: recurringTransactionRules.seriesId,
+          name: recurringTransactionRules.name,
           accountId: recurringTransactionRules.accountId,
           sourceAccountId: recurringTransactionRules.sourceAccountId,
           destinationAccountId: recurringTransactionRules.destinationAccountId,
@@ -487,6 +488,7 @@ export const accountsRepository = {
         .select({
           id: recurringTransactionRules.id,
           seriesId: recurringTransactionRules.seriesId,
+          name: recurringTransactionRules.name,
           accountId: recurringTransactionRules.accountId,
           sourceAccountId: recurringTransactionRules.sourceAccountId,
           destinationAccountId: recurringTransactionRules.destinationAccountId,

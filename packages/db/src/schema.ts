@@ -581,6 +581,7 @@ export const userPreferences = pgTable(
     transactionsPageSize: integer("transactions_page_size").notNull().default(30),
     mobileShortcut: mobileShortcutDestination("mobile_shortcut").notNull().default("accounts"),
     startPage: startPageDestination("start_page").notNull().default("dashboard"),
+    forecastMinimumBalance: numeric("forecast_minimum_balance", { precision: 12, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
       .notNull()
@@ -597,6 +598,10 @@ export const userPreferences = pgTable(
     check(
       "user_preferences_transactions_page_size_check",
       sql`${table.transactionsPageSize} in (20, 30, 50)`,
+    ),
+    check(
+      "user_preferences_forecast_minimum_balance_check",
+      sql`${table.forecastMinimumBalance} is null or ${table.forecastMinimumBalance} >= 0`,
     ),
   ],
 );

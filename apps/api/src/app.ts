@@ -20,6 +20,7 @@ import { attachmentsRepository } from "./repositories/attachments.repository";
 import { billsRepository } from "./repositories/bills.repository";
 import { budgetsRepository } from "./repositories/budgets.repository";
 import { cardsRepository, findCardByIdForUser } from "./repositories/cards.repository";
+import { cashForecastRepository } from "./repositories/cash-forecast.repository";
 import {
   categoriesRepository,
   findCategoryByIdForUser,
@@ -190,14 +191,6 @@ const budgetsRoute = createBudgetsRoute(budgetsService);
 const commitmentsService = createCommitmentsService(commitmentsRepository);
 const forecastSimulationsService = createForecastSimulationsService(forecastSimulationsRepository);
 const forecastSimulationsRoute = createForecastSimulationsRoute(forecastSimulationsService);
-const cashForecastRoute = createCashForecastRoute(
-  createCashForecastService({
-    commitments: commitmentsService,
-    budgets: budgetsService,
-    accounts: accountsService,
-    simulations: forecastSimulationsService,
-  }),
-);
 const goalsService = createGoalsService(goalsRepository, accountsService);
 const goalsRoute = createGoalsRoute(goalsService);
 const billsService = createBillsService(billsRepository, undefined, dueDateRulesRepository);
@@ -347,6 +340,17 @@ const dueDateRulesService = createDueDateRulesService(
 );
 const dueDateRulesRoute = createDueDateRulesRoute(dueDateRulesService);
 const preferencesService = createPreferencesService(preferencesRepository);
+const cashForecastRoute = createCashForecastRoute(
+  createCashForecastService({
+    commitments: commitmentsService,
+    budgets: budgetsService,
+    accounts: accountsService,
+    invoices: invoicesService,
+    simulations: forecastSimulationsService,
+    preferences: preferencesService,
+    repository: cashForecastRepository,
+  }),
+);
 const preferencesRoute = createPreferencesRoute(preferencesService);
 const deviceTokenSecret =
   assertProductionSecret("DEVICE_TOKEN_SECRET", ["development-device-token-secret-change-me"]) ??

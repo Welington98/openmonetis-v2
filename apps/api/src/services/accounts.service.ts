@@ -8,12 +8,14 @@ import {
   createAccountDraft,
   createAccountYieldDraft,
 } from "@openmonetis/domain/accounts";
+import { resolvePendingCashDate } from "@openmonetis/domain/cash-forecast";
 import { getRecurringDueDate } from "@openmonetis/domain/recurring-expenses";
 import { getOccurrenceAmount, type SettlementAwareRule } from "@openmonetis/domain/settlements";
 import {
   addMonthsToPeriod,
   buildTransferPostings,
   deriveTransactionPeriod,
+  deriveTransactionPostingDate,
   deriveTransactionPostingPeriod,
   getPeriodEndDate,
   getPeriodFromDate,
@@ -97,6 +99,7 @@ type DeleteAccountResult =
 type AccountRecurringRuleRecord = SettlementAwareRule & {
   id: string;
   seriesId: string;
+  name?: string;
   accountId: string | null;
   sourceAccountId: string | null;
   destinationAccountId: string | null;
@@ -199,6 +202,14 @@ export function createAccountsService(
           })),
         }),
       ),
+    );
+  }
+
+  async function listBalanceAccountIds(userId: string) {
+    return new Set(
+      (await repository.listByUser(userId))
+        .filter((account) => !account.isArchived && !account.excludeFromBalance)
+        .map((account) => account.id),
     );
   }
 
@@ -353,6 +364,48 @@ export function createAccountsService(
             amount: Number(posting.amount),
             includeInSummary: posting.includeInSummary,
           })),
+      });
+    },
+
+    /**
+     * Settled postings of a period with their dates, for the accounts that count towards the
+     * total balance. Feeds the realized days of the daily cash forecast.
+     */
+    async listDailyPostings(userId: string, period: string) {
+      const includedAccountIds = await listBalanceAccountIds(userId);
+      return (await loadAccountPostings(userId, period))
+        .filter(
+          (posting) =>
+            posting.period === period &&
+            posting.accountId !== null &&
+            includedAccountIds.has(posting.accountId),
+        )
+        .map((posting) => ({
+          date: posting.postingDate ?? `${posting.period}-01`,
+          amount: Number(posting.amount),
+        }));
+    },
+
+    /**
+     * Recurring occurrences on accounts that still have to move money from `fromPeriod` through
+     * `toPeriod`: unsettled ones in `fromPeriod` and every one after it, since balances only
+     * include postings through the current period.
+     */
+    async listScheduledRecurringOccurrences(userId: string, fromPeriod: string, toPeriod: string) {
+      const includedAccountIds = await listBalanceAccountIds(userId);
+      const rules = await repository.listAccountRecurringRulesThroughPeriod(
+        userId,
+        getPeriodEndDate(toPeriod),
+      );
+      const occurrenceStates = await repository.listRecurringOccurrenceStatesThroughPeriod(
+        userId,
+        [...new Set(rules.map((rule) => rule.seriesId))],
+        getPeriodEndDate(toPeriod),
+      );
+      return expandScheduledRecurringOccurrences(rules, occurrenceStates, {
+        fromPeriod,
+        toPeriod,
+        includedAccountIds,
       });
     },
 
@@ -567,5 +620,103 @@ function expandSettledRecurringPostings(
     }
 
     return postings;
+  });
+}
+
+export type ScheduledRecurringOccurrence = {
+  date: string;
+  period: string;
+  /** Signed effect on the accounts that count towards the total balance. */
+  amount: number;
+  type: TransactionType;
+  name: string;
+};
+
+function expandScheduledRecurringOccurrences(
+  rules: AccountRecurringRuleRecord[],
+  occurrenceStates: AccountRecurringOccurrenceRecord[],
+  window: { fromPeriod: string; toPeriod: string; includedAccountIds: Set<string> },
+): ScheduledRecurringOccurrence[] {
+  const states = new Map(
+    occurrenceStates.map((occurrence) => [
+      `${occurrence.recurringSeriesId}:${occurrence.purchaseDate}`,
+      occurrence,
+    ]),
+  );
+  const included = (accountId: string | null) =>
+    accountId !== null && window.includedAccountIds.has(accountId);
+
+  return rules.flatMap((rule) => {
+    const occurrences: ScheduledRecurringOccurrence[] = [];
+    // Card-due and boleto occurrences can be scheduled in a later month than their purchase.
+    for (
+      let purchasePeriod = addMonthsToPeriod(window.fromPeriod, -2);
+      purchasePeriod <= window.toPeriod;
+      purchasePeriod = addMonthsToPeriod(purchasePeriod, 1)
+    ) {
+      for (const purchaseDate of listRecurrenceDatesInPeriod({
+        dueDate: rule.dueDate,
+        recurrenceEndDate: rule.configuredEndDate,
+        anchorDate: rule.anchorDate,
+        startDate: rule.startDate,
+        endDate: rule.endDate,
+        frequency: rule.frequency,
+        period: purchasePeriod,
+      })) {
+        const occurrence = states.get(`${rule.seriesId}:${purchaseDate}`);
+        const dueDate = getRecurringDueDate(rule.dueDate, purchaseDate);
+        const period = deriveTransactionPeriod({
+          paymentMethod: rule.paymentMethod,
+          purchaseDate,
+          dueDate,
+        });
+        if (period < window.fromPeriod || period > window.toPeriod) continue;
+        const settled = (occurrence?.isSettled ?? rule.isSettled) === true;
+        // Settled occurrences up to the first period are already part of the account balances.
+        if (
+          settled &&
+          deriveTransactionPostingPeriod({
+            period,
+            paymentMethod: rule.paymentMethod,
+            boletoPaymentDate: occurrence?.boletoPaymentDate,
+            settledDate: occurrence?.settledDate,
+          }) <= window.fromPeriod
+        ) {
+          continue;
+        }
+
+        const amount = Math.abs(Number(getOccurrenceAmount(rule, purchaseDate, rule.amount)));
+        const date = settled
+          ? (deriveTransactionPostingDate({
+              paymentMethod: rule.paymentMethod,
+              purchaseDate,
+              dueDate,
+              boletoPaymentDate: occurrence?.boletoPaymentDate,
+              settledDate: occurrence?.settledDate,
+              isSettled: true,
+            }) as string)
+          : resolvePendingCashDate({
+              purchaseDate,
+              dueDate,
+              boletoPaymentDate: occurrence?.boletoPaymentDate,
+            });
+        let signedAmount = 0;
+        if (rule.type === "transfer") {
+          if (included(rule.destinationAccountId)) signedAmount += amount;
+          if (included(rule.sourceAccountId)) signedAmount -= amount;
+        } else if (included(occurrence?.accountId ?? rule.accountId)) {
+          signedAmount = rule.type === "income" ? amount : -amount;
+        }
+        if (signedAmount === 0) continue;
+        occurrences.push({
+          date,
+          period,
+          amount: signedAmount,
+          type: rule.type,
+          name: rule.name ?? "",
+        });
+      }
+    }
+    return occurrences;
   });
 }

@@ -14,15 +14,24 @@ export const Route = createFileRoute("/reports/cash-forecast")({
 function CashForecastRoute() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const filters = resolveCashForecastSearch(search);
+  const view = search.view ?? "monthly";
   return (
     <CashForecastPage
-      filters={resolveCashForecastSearch(search)}
-      onChange={(filters) => {
+      filters={filters}
+      onChange={(next) => {
         void navigate({
-          search: { period: filters.startPeriod, months: filters.months },
+          search: { view, period: next.startPeriod, months: next.months },
           replace: true,
         });
       }}
+      onViewChange={(nextView) => {
+        void navigate({
+          search: { view: nextView, period: filters.startPeriod, months: filters.months },
+          replace: true,
+        });
+      }}
+      view={view}
     />
   );
 }

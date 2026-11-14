@@ -232,6 +232,13 @@
       "when": 1794626810754,
       "tag": "0032_forecast_simulations",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794655279211,
+      "tag": "0033_forecast_minimum_balance",
+      "breakpoints": true
     }
   ]
 }

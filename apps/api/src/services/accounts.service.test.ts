@@ -285,3 +285,62 @@ test("account deletion explains when a goal still links to the account", async (
     (error: ApiError) => error.code === "account_has_linked_goal" && error.status === 409,
   );
 });
+
+test("scheduled recurring occurrences skip what the balances already hold", async () => {
+  const rule = {
+    id: "rule-rent",
+    seriesId: "series-rent",
+    name: "Aluguel",
+    accountId,
+    sourceAccountId: null,
+    destinationAccountId: null,
+    amount: "-1500.00",
+    type: "expense" as const,
+    paymentMethod: "pix" as const,
+    anchorDate: "2026-10-10",
+    startDate: "2026-10-10",
+    endDate: null,
+    dueDate: null,
+    frequency: "monthly" as const,
+    isSettled: false,
+  };
+  const service = createAccountsService(
+    createRepository({
+      listAccountRecurringRulesThroughPeriod: async () => [
+        rule,
+        {
+          ...rule,
+          id: "rule-salary",
+          seriesId: "series-salary",
+          name: "Salário",
+          type: "income",
+          amount: "5000.00",
+          isSettled: true,
+          anchorDate: "2026-10-05",
+          startDate: "2026-10-05",
+        },
+        { ...rule, id: "rule-vault", seriesId: "series-vault", name: "Cofre", accountId: "vault" },
+      ],
+      listRecurringOccurrenceStatesThroughPeriod: async () => [
+        {
+          recurringSeriesId: "series-rent",
+          purchaseDate: "2026-11-10",
+          isSettled: true,
+          accountId,
+          boletoPaymentDate: null,
+          settledDate: "2026-11-10",
+        },
+      ],
+    }),
+  );
+
+  const occurrences = await service.listScheduledRecurringOccurrences(userId, "2026-11", "2026-12");
+
+  assert.deepEqual(
+    occurrences.map((occurrence) => [occurrence.name, occurrence.date, occurrence.amount]),
+    [
+      ["Aluguel", "2026-12-10", -1500],
+      ["Salário", "2026-12-05", 5000],
+    ],
+  );
+});
