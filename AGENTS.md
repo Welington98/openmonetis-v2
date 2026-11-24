@@ -221,6 +221,37 @@ escopo.
 - `commits.md`, `deploy.md`, `cleanup.md` e as três skills são privados do mantenedor, ignorados
   pelo Git e não fazem parte da documentação pública do OpenMonetis.
 
-## 17. Princípio Final
+## 17. Fork e sincronização com o upstream
+
+Este repositório é mantido como fork do OpenMonetis V2 de Felipe Coutinho (copyright dele, ver
+`LICENSE`). Features próprias convivem com as do upstream.
+
+- **Remotes:** `origin` é o repositório do mantenedor deste fork; `upstream` é
+  `https://github.com/felipegcoutinho/openmonetis-v2.git`. O repo `felipegcoutinho/openmonetis`
+  (v1, Next.js) está arquivado e nunca é fonte de sincronização.
+- **Branches:** features próprias nascem em `feat/<nome>` e entram na `main` do fork. Não
+  trabalhar direto na `main`; mantê-la limpa facilita cada sync.
+- **Sync:** `git fetch upstream`, ler `git log HEAD..upstream/main` e o `CHANGELOG.md` do upstream,
+  depois `git merge upstream/main` (merge, não rebase, para não reescrever histórico publicado).
+  Se não houver commits próprios fora do upstream, usar `git merge --ff-only upstream/main`.
+  Exigir árvore limpa antes de sincronizar.
+- **Conflitos:** resolver caso a caso lendo os dois lados. Conflito de regra de negócio (domain)
+  é decisão do mantenedor: apresentar as opções, não escolher sozinho. Depois do merge, rodar
+  lint, typecheck e testes.
+- **Migrations Drizzle:** o upstream numera em sequência (`packages/db/drizzle/NNNN_*.sql`). Se uma
+  migration própria colidir com número do upstream, renumerar a do fork depois do sync e conferir
+  `meta/_journal.json` e os snapshots. Nunca editar migration do upstream já publicada.
+- **Reduzir conflitos:** preferir arquivos novos seguindo o shape da seção 4 a editar muito
+  arquivos que o upstream também altera; não reformatar nem renomear código do upstream;
+  sincronizar com frequência.
+- **Versionamento:** a numeração de versão do upstream não é a deste fork. Antes de publicar
+  releases próprias, definir um esquema que não colida com as tags dele (seção 15 continua valendo
+  para o processo).
+- **Aprovação:** `git push` e qualquer publicação continuam exigindo pedido explícito; sincronizar
+  localmente não autoriza push, tag, release ou deploy.
+- **Licença:** antes de redistribuir ou publicar o fork, conferir a `LICENSE` completa; ela define
+  o que é permitido.
+
+## 18. Princípio Final
 
 Backend é o núcleo, frontend é interface. Domain é a camada mais estável — tudo gira em torno dela, nunca o contrário.
