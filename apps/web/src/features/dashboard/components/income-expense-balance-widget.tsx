@@ -166,7 +166,44 @@ function FinancialHistoryChart({
       </div>
       {isPrivacyModeEnabled ? (
         <span className="sr-only">Gráfico oculto pelo modo privacidade.</span>
-      ) : null}
+      ) : (
+        <FinancialHistoryTable history={history} />
+      )}
+    </div>
+  );
+}
+
+/** Text alternative for screen readers with the same figures the chart draws (WCAG 1.1.1). */
+function FinancialHistoryTable({ history }: { history: HistoryEntry[] }) {
+  return (
+    <div className="sr-only">
+      <table>
+        <caption>Receitas, despesas e resultado dos últimos seis meses</caption>
+        <thead>
+          <tr>
+            <th scope="col">Mês</th>
+            <th scope="col">{chartConfig.income.label}</th>
+            <th scope="col">{chartConfig.expenses.label}</th>
+            <th scope="col">{chartConfig.balance.label}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {history.map((entry) => (
+            <tr key={entry.period}>
+              <th scope="row">{formatDashboardPeriod(entry.period)}</th>
+              <td>
+                <MoneyValue amount={entry.income} />
+              </td>
+              <td>
+                <MoneyValue amount={entry.expenses} />
+              </td>
+              <td>
+                <MoneyValue amount={entry.balance} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

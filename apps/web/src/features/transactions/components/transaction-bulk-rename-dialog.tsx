@@ -110,7 +110,7 @@ function TransactionBulkRenameForm({
             <form.Field name="name">
               {(field) => (
                 <div className="grid gap-2">
-                  <Label className="font-mono sr-only" htmlFor={id}>
+                  <Label className="sr-only" htmlFor={id}>
                     Nova descrição
                   </Label>
                   <Input
@@ -204,7 +204,7 @@ function TransactionBulkRenameForm({
               Cancelar
             </Button>
             <Button disabled={pending} type="submit">
-              {pending ? "Aplicando..." : `Aplicar a ${count} lançamento${count === 1 ? "" : "s"}`}
+              {pending ? "Aplicando…" : `Aplicar a ${count} lançamento${count === 1 ? "" : "s"}`}
             </Button>
           </div>
         )}

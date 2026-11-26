@@ -5,17 +5,20 @@ import {
   CalendarDays,
   FileText,
   ListChecks,
+  Paperclip,
   Pencil,
   RotateCcw,
   Trash2,
 } from "lucide-react";
 import { CardActionsMenu } from "@/components/card-actions-menu";
+import { cardFooterActionClassName } from "@/components/card-footer-action";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
+  formatAttachmentCount,
   formatNoteUpdatedAt,
   formatTaskDueDate,
   getChecklistProgressLabel,
@@ -52,7 +55,7 @@ export function NoteCard({
   const hiddenItemCount = note.items.length - visibleItems.length;
 
   return (
-    <Card className={cn("gap-4", note.isArchived && "opacity-70")}>
+    <Card className={cn("gap-4", note.isArchived && "opacity-70")} data-mobile-entity-card>
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -75,8 +78,19 @@ export function NoteCard({
                   {note.title}
                 </CardTitle>
               </button>
-              <p className="mt-0.5 font-mono text-muted-foreground text-xs">
-                {noteKindLabels[note.kind]}
+              <p className="mt-0.5 flex items-center gap-2 font-mono text-muted-foreground text-xs">
+                <span>{noteKindLabels[note.kind]}</span>
+                {note.attachmentCount > 0 ? (
+                  <span
+                    className="inline-flex items-center gap-1 tabular-nums"
+                    title={formatAttachmentCount(note.attachmentCount)}
+                  >
+                    <span aria-hidden="true">·</span>
+                    <Paperclip aria-hidden="true" className="size-3" />
+                    <span aria-hidden="true">{note.attachmentCount}</span>
+                    <span className="sr-only">{formatAttachmentCount(note.attachmentCount)}</span>
+                  </span>
+                ) : null}
               </p>
             </div>
           </div>
@@ -208,7 +222,7 @@ export function NoteCard({
       <CardFooter className="mt-auto flex flex-wrap gap-3 border-t pt-3">
         {!note.isArchived ? (
           <button
-            className="-mx-1 inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium text-brand-strong text-sm transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring"
+            className={cardFooterActionClassName}
             disabled={pendingAction}
             onClick={() => onEdit(note)}
             type="button"
@@ -218,7 +232,7 @@ export function NoteCard({
           </button>
         ) : null}
         <button
-          className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 font-medium text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={cardFooterActionClassName}
           disabled={pendingAction}
           onClick={() => onArchive(note, !note.isArchived)}
           type="button"

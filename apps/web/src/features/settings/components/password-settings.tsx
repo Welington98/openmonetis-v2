@@ -40,7 +40,7 @@ export function PasswordSettings() {
       ) : null}
 
       {securityQuery.data?.passwordChangeAvailable === false ? (
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
+        <div className="rounded-lg border bg-muted/40 p-4">
           <p className="font-medium text-sm">Esta conta não possui senha</p>
           <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
             Seu acesso foi criado com o Google. Para alterar a senha da conta Google, use as
@@ -237,7 +237,7 @@ function ChangePasswordForm({
               ) : (
                 <KeyRound aria-hidden="true" className="size-4" />
               )}
-              {isSubmitting ? "Alterando..." : "Alterar senha"}
+              {isSubmitting ? "Alterando…" : "Alterar senha"}
             </Button>
           </DialogFooter>
         )}
@@ -265,7 +265,7 @@ function PasswordField({
 
   return (
     <div className="grid gap-2">
-      <Label className="font-mono text-sm tracking-normal" htmlFor={id}>
+      <Label className="text-sm tracking-normal" htmlFor={id}>
         {label}
       </Label>
       <PasswordInput

@@ -87,9 +87,7 @@ export function PasskeyNameDialog({
           >
             {(field) => (
               <div className="grid gap-2">
-                <Label className="font-mono" htmlFor={inputId}>
-                  Nome {isAdding ? "(opcional)" : ""}
-                </Label>
+                <Label htmlFor={inputId}>Nome {isAdding ? "(opcional)" : ""}</Label>
                 <Input
                   aria-invalid={field.state.meta.errors.length > 0}
                   aria-describedby={field.state.meta.errors.length ? `${inputId}-error` : undefined}
@@ -124,8 +122,8 @@ export function PasskeyNameDialog({
                 <Button disabled={isSubmitting} type="submit">
                   {isSubmitting
                     ? isAdding
-                      ? "Confirmando..."
-                      : "Salvando..."
+                      ? "Confirmando…"
+                      : "Salvando…"
                     : isAdding
                       ? "Continuar"
                       : "Salvar"}

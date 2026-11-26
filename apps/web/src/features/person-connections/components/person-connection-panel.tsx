@@ -202,9 +202,7 @@ export function PersonConnectionPanel({ person }: { person: PersonOutput }) {
                   </p>
                 </div>
                 <div className="grid gap-2">
-                  <Label className="font-mono" htmlFor={confirmationCodeId}>
-                    Código de confirmação
-                  </Label>
+                  <Label htmlFor={confirmationCodeId}>Código de confirmação</Label>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <Input
                       aria-describedby={confirmationCodeHintId}
@@ -362,7 +360,7 @@ function ConnectionLoading() {
   return (
     <div className="flex items-center gap-3 text-muted-foreground text-sm">
       <Loader2 aria-hidden="true" className="size-5 animate-spin text-brand-strong" />
-      Verificando o status da conexão...
+      Verificando o status da conexão…
     </div>
   );
 }

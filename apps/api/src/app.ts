@@ -201,9 +201,9 @@ const invoicesService = createInvoicesService(
   dueDateRulesRepository,
 );
 const invoicesRoute = createInvoicesRoute(invoicesService);
-const notesService = createNotesService(notesRepository);
-const notesRoute = createNotesRoute(notesService);
 const attachmentsService = createAttachmentsService(attachmentsRepository, attachmentStorage);
+const notesService = createNotesService(notesRepository, attachmentsService);
+const notesRoute = createNotesRoute(notesService);
 const attachmentsRoute = createAttachmentsRoute(attachmentsService);
 const transactionsService = createTransactionsService(
   {
@@ -360,6 +360,7 @@ const dashboardService = createDashboardService(dashboardRepository, accountsSer
   budgets: budgetsService,
   inbox: inboxService,
   invoices: invoicesService,
+  notes: notesService,
 });
 const dashboardRoute = createDashboardRoute(dashboardService);
 const aiProvidersService = createAiProvidersService(aiProvidersRepository, aiServiceGateway);

@@ -4,6 +4,8 @@ import { Image } from "@unpic/react";
 import { Archive, CalendarDays, FileText, Info, Pencil, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { CardActionsMenu } from "@/components/card-actions-menu";
+import { cardFooterActionClassName } from "@/components/card-footer-action";
+import { InfoTip } from "@/components/info-tip";
 import { MoneyValue } from "@/components/money-value";
 import { NotePopover } from "@/components/note-popover";
 import {
@@ -19,7 +21,6 @@ import {
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatPeriod } from "@/lib/period-presentation";
 import { cn } from "@/lib/utils";
 import { getCardBrandAsset } from "../card-brand-assets";
@@ -117,19 +118,17 @@ export function CardCard({ card, onArchive, onDelete, onEdit, pending = false }:
                 Fecha <strong className="font-medium text-foreground">dia {card.closingDay}</strong>
               </>
             ) : (
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <button
-                      className="border-muted-foreground/50 border-b border-solid font-medium text-foreground focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                      type="button"
-                    />
-                  }
-                >
-                  Fechamento variável
-                </TooltipTrigger>
-                <TooltipContent>{getCardClosingRuleDescription(card)}</TooltipContent>
-              </Tooltip>
+              <InfoTip
+                render={
+                  <button
+                    className="relative border-muted-foreground/50 border-b border-solid font-medium text-foreground after:absolute after:-inset-x-1 after:-inset-y-3 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                    type="button"
+                  />
+                }
+                trigger="Fechamento variável"
+              >
+                {getCardClosingRuleDescription(card)}
+              </InfoTip>
             )}
           </span>
           <span className="flex items-center justify-end gap-1.5 text-muted-foreground">
@@ -141,7 +140,7 @@ export function CardCard({ card, onArchive, onDelete, onEdit, pending = false }:
       <CardContent className="flex flex-1 flex-col gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-mono text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-xs">
               Fatura de {formatPeriod(card.invoiceSummary.period)}
             </p>
             <span
@@ -170,8 +169,14 @@ export function CardCard({ card, onArchive, onDelete, onEdit, pending = false }:
             value={<MoneyValue amount={card.invoiceSummary.availableLimit} />}
           />
         </div>
-        <p className="text-muted-foreground text-xs">Parcelas futuras também ocupam o limite.</p>
+        {/* Usage reads as one block: the figure above the bar, the caveat that explains it below. */}
         <div className="flex flex-col gap-2">
+          <span className="text-muted-foreground text-xs">
+            <span className="font-medium text-foreground tabular-nums">
+              {card.invoiceSummary.usagePercentage.toLocaleString("pt-BR")}%
+            </span>{" "}
+            do limite utilizado
+          </span>
           <Progress
             aria-label={`${card.invoiceSummary.usagePercentage.toLocaleString("pt-BR")}% do limite utilizado`}
             indicatorClassName={cn(
@@ -180,26 +185,20 @@ export function CardCard({ card, onArchive, onDelete, onEdit, pending = false }:
             )}
             value={Math.min(100, card.invoiceSummary.usagePercentage)}
           />
-          <span className="text-muted-foreground text-xs">
-            {card.invoiceSummary.usagePercentage.toLocaleString("pt-BR")} % do limite utilizado
-          </span>
+          <p className="text-muted-foreground text-xs">Parcelas futuras também ocupam o limite.</p>
         </div>
       </CardContent>
 
       <CardFooter className="mt-auto flex flex-wrap gap-3 border-t pt-3">
         <Link
-          className="-mx-1 inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium text-brand-strong text-sm transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring"
+          className={cardFooterActionClassName}
           params={{ cardId: card.id }}
           to="/cards/$cardId"
         >
           <FileText aria-hidden="true" className="size-3.5" />
           Fatura
         </Link>
-        <button
-          className="-mx-1 inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium text-brand-strong text-sm transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring"
-          onClick={() => onEdit(card)}
-          type="button"
-        >
+        <button className={cardFooterActionClassName} onClick={() => onEdit(card)} type="button">
           <Pencil aria-hidden="true" className="size-3.5" />
           Editar
         </button>
@@ -238,7 +237,7 @@ export function CardCard({ card, onArchive, onDelete, onEdit, pending = false }:
               }}
               variant="destructive"
             >
-              {pending ? "Inativando..." : "Inativar"}
+              {pending ? "Inativando…" : "Inativar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -263,7 +262,7 @@ export function CardCard({ card, onArchive, onDelete, onEdit, pending = false }:
               }}
               variant="destructive"
             >
-              {pending ? "Excluindo..." : "Excluir permanentemente"}
+              {pending ? "Excluindo…" : "Excluir permanentemente"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -275,7 +274,7 @@ export function CardCard({ card, onArchive, onDelete, onEdit, pending = false }:
 function CardMetric({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-0">
-      <p className="truncate font-mono text-muted-foreground text-xs">{label}</p>
+      <p className="truncate text-muted-foreground text-xs">{label}</p>
       <p className="mt-0.5 truncate font-medium text-sm tabular-nums">{value}</p>
     </div>
   );

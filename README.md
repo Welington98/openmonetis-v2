@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/licen%C3%A7a-Sustainable%20Use%201.0-f97316" alt="Licença Sustainable Use 1.0" /></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.18.0-f97316" alt="Versão 0.18.0" /></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.20.1-f97316" alt="Versão 0.20.1" /></a>
   <img src="https://img.shields.io/badge/Docker-self--hosted-2496ED?logo=docker&logoColor=white" alt="Aplicação self-hosted com Docker" />
 </p>
 
@@ -32,13 +32,19 @@
 - contas, cartões, faturas, transações e transferências;
 - parcelas, recorrências, orçamentos que se repetem todo mês, metas com histórico de aportes e
   contas a pagar;
-- calendário do mês com vencimentos, faturas e tarefas, e busca global com **Ctrl K**;
+- visão geral do mês com widgets configuráveis e o painel **Precisa de atenção**, que reúne faturas
+  e contas vencidas ou perto do vencimento, tarefas com prazo, orçamentos estourados e capturas a
+  revisar, do mais urgente para o menos urgente;
+- calendário do mês com vencimentos, faturas e tarefas, busca global com **Ctrl K** e calculadora
+  com histórico;
 - pessoas, divisões, repasses e gastos compartilhados entre contas;
-- categorias e subcategorias, etiquetas, estabelecimentos, notas e checklists, além de anexos quando um storage S3 está
-  configurado;
-- relatórios, dashboard mensal e widgets configuráveis;
+- categorias e subcategorias, etiquetas, estabelecimentos com logo, e anotações em forma de nota,
+  lista ou tarefa com prazo, além de anexos quando um storage S3 está configurado;
+- relatórios de evolução por categoria, distribuição financeira, compromissos futuros,
+  parcelamentos e recorrências;
 - importação por planilha e caixa de entrada do Companion Android com regras configuráveis de
   categorização e pessoa;
+- temas claro e escuro, e um aplicativo instalável pelo navegador, pensado para o celular;
 - assistente de IA opcional, com diagnóstico da saúde financeira do mês e chat sobre os seus dados,
   usando a própria assinatura de Claude, ChatGPT (Codex) ou a conta Google (Antigravity) de cada
   pessoa.
@@ -108,6 +114,10 @@ pnpm dev
 A aplicação web fica em `http://localhost:7002`, a API em `http://localhost:7001` e o PostgreSQL em
 `127.0.0.1:7000`.
 
+Para explorar a aplicação com dados, `pnpm db:test-user` cria no banco local o usuário de teste
+`teste@openmonetis.local` (senha `openmonetis-teste`) com seis meses de dados demonstrativos; veja o
+[guia de testes](docs/testing.md).
+
 Comandos de validação:
 
 ```bash
@@ -151,6 +161,7 @@ detalhes e as convenções no [`guia de arquitetura`](docs/architecture.md).
 - [`docs/budgets.md`](docs/budgets.md): limites do mês, orçamentos recorrentes e ajustes mensais;
 - [`docs/person-reports.md`](docs/person-reports.md): extrato mensal de cada pessoa externa;
 - [`docs/due-date-rules.md`](docs/due-date-rules.md): calendário compartilhado, ajustes e exceções de vencimento;
+- [`docs/themes.md`](docs/themes.md): modo, temas de cada modo, como adicionar um tema e regras de contraste;
 - [`docs/ai-diagnoses.md`](docs/ai-diagnoses.md): assistente de IA, permissões de dados, serviço
   `openmonetis-ai` e atualização das CLIs;
 - [`docs/companion-api.md`](docs/companion-api.md): contrato do Companion;

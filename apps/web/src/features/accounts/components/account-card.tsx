@@ -1,9 +1,11 @@
 import type { AccountOutput } from "@openmonetis/validators/accounts";
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { Archive, FileText, Info, Pencil, Trash2 } from "lucide-react";
+import { Archive, FileText, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { CardActionsMenu } from "@/components/card-actions-menu";
+import { cardFooterActionClassName } from "@/components/card-footer-action";
+import { InfoTip } from "@/components/info-tip";
 import { MoneyValue } from "@/components/money-value";
 import {
   AlertDialog,
@@ -17,7 +19,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { accountTypeLabels } from "../accounts.presentation";
 
@@ -72,24 +73,11 @@ export function AccountCard({
                   </Link>
                 </CardTitle>
                 {hasAccountingNote ? (
-                  <Tooltip>
-                    <TooltipTrigger
-                      aria-label={`Informações de saldo de ${account.name}`}
-                      render={
-                        <button
-                          className="text-muted-foreground hover:text-foreground"
-                          type="button"
-                        />
-                      }
-                    >
-                      <Info aria-hidden="true" className="size-3.5" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      {account.excludeFromBalance ? (
-                        <p>Esta conta não participa do saldo consolidado.</p>
-                      ) : null}
-                    </TooltipContent>
-                  </Tooltip>
+                  <InfoTip label={`Informações de saldo de ${account.name}`}>
+                    {account.excludeFromBalance ? (
+                      <p>Esta conta não participa do saldo consolidado.</p>
+                    ) : null}
+                  </InfoTip>
                 ) : null}
               </div>
               <p className="mt-0.5 truncate text-muted-foreground text-xs">
@@ -120,18 +108,14 @@ export function AccountCard({
 
       <CardFooter className="flex flex-wrap gap-3 border-t pt-3">
         <Link
-          className="-mx-1 inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium text-brand-strong text-sm transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring"
+          className={cardFooterActionClassName}
           params={{ accountId: account.id }}
           to="/accounts/$accountId"
         >
           <FileText aria-hidden="true" className="size-3.5" />
           Extrato
         </Link>
-        <button
-          className="-mx-1 inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium text-brand-strong text-sm transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring"
-          onClick={() => onEdit(account)}
-          type="button"
-        >
+        <button className={cardFooterActionClassName} onClick={() => onEdit(account)} type="button">
           <Pencil aria-hidden="true" className="size-3.5" />
           Editar
         </button>
@@ -170,7 +154,7 @@ export function AccountCard({
               }}
               variant="destructive"
             >
-              {pending ? "Inativando..." : "Inativar"}
+              {pending ? "Inativando…" : "Inativar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -198,7 +182,7 @@ export function AccountCard({
               }}
               variant="destructive"
             >
-              {pending ? "Excluindo..." : "Excluir permanentemente"}
+              {pending ? "Excluindo…" : "Excluir permanentemente"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

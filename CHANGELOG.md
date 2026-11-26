@@ -7,6 +7,296 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.20.1] - 2026-11-23
+
+O aplicativo instalado pelo Firefox para Android volta a abrir como aplicativo, com o manifesto
+estático e os atalhos no ícone, e a barra de status passa a usar a cor principal do tema. O tema
+salvo é aplicado antes da primeira pintura mesmo em conexões lentas, e a Caixa de entrada e a
+Distribuição financeira recebem ajustes visuais.
+
+### Alterado
+
+- Caixa de entrada: em **Por origem**, cartões e contas ficam direto no card, alinhados ao
+  cabeçalho, em vez de numa caixa interna, com o logo ou o ícone num círculo e textos em cinza
+  neutro.
+
+### Corrigido
+
+- Distribuição financeira: o valor de **Taxa de poupança** tem o mesmo tamanho dos demais
+  indicadores, em vez do tamanho de legenda.
+- Aparência: ao abrir ou recarregar uma página, o tema salvo é aplicado antes de qualquer parte da
+  tela aparecer. Em conexões lentas, o primeiro quadro podia surgir sem o tema e piscar o padrão
+  antes de trocar.
+- Celular: o aplicativo instalado volta a abrir sozinho, como um aplicativo, e não como atalho do
+  navegador. O manifesto voltou a ser o arquivo estático da 0.19.0, com os atalhos no ícone, agora
+  com a cor laranja do OpenMonetis, e o link é enviado com as credenciais de login. Quem instalou o
+  aplicativo pela 0.20.0 precisa remover o atalho e instalar de novo.
+- Celular: a barra de status passa a usar a cor principal do tema escolhido no Chrome, no
+  navegador e no aplicativo instalado. O Firefox para Android e o aplicativo instalado no iPhone
+  não seguem o tema: no aplicativo instalado pelo Firefox, a barra fica na cor laranja do
+  OpenMonetis.
+
+## [0.20.0] - 2026-11-22
+
+O tema claro padrão fica branco sobre o fundo areia e todos os campos de formulário passam a ter o
+mesmo visual. No celular, a barra inferior vira só ícones com o botão **Novo** no centro, que
+também cria anotações, e as barras do sistema acompanham o tema do aplicativo. A calculadora ganha
+histórico, **Precisa de atenção** passa a mostrar tarefas com prazo e a comparação de faturas por
+pessoa conta a parte de cada um nas compras divididas.
+
+### Adicionado
+
+- Desenvolvimento: `pnpm db:test-user` cria ou recria o usuário de teste local, Pumita Rodriguez
+  (`teste@openmonetis.local`, senha `openmonetis-teste`) com seis meses de dados demonstrativos até o
+  mês atual e um avatar do catálogo do app. O comando só roda fora de produção e contra o banco
+  local; ver `docs/testing.md`.
+  Nos dados demonstrativos (`pnpm db:seed`), Marina Oliveira e Eduardo Lima deixam de aparecer com
+  o avatar um do outro.
+- Calculadora: o botão **Histórico** no visor mostra as 20 últimas contas, da mais recente para a
+  mais antiga. Tocar em uma conta traz o resultado de volta ao visor, de onde é possível continuar
+  calculando ou usar o valor no formulário. O histórico fica salvo só neste navegador, aparece
+  desfocado no modo de privacidade e é apagado em **Limpar histórico** ou ao sair da conta.
+- Visão geral: **Precisa de atenção** passa a listar as tarefas pendentes das Anotações com prazo
+  vencido (urgente, como **Tarefa atrasada**) ou nos próximos sete dias, com atalho para as
+  anotações. O cartão ganha um selo com a contagem e um brilho discreto na cor do item mais
+  urgente, e o vermelho fica reservado ao que já venceu.
+
+### Alterado
+
+- Tema padrão (OpenMonetis claro): cards, janelas, painéis laterais e folhas passam a ser brancos
+  sobre o fundo areia, e os campos de formulário, seletores, botões de contorno, a aba ativa, o
+  botão dos interruptores, a barra de navegação por mês e os submenus do cabeçalho acompanham o
+  branco; a barra do cabeçalho continua translúcida sobre o fundo areia. As bordas de cards e
+  campos ficam mais suaves, as áreas secundárias passam de bege para um cinza quente discreto e os
+  destaques de seleção usam o coral sobre branco. Os demais temas não mudam.
+- Formulários: todos os campos (texto, valor, datas, listas, seletores de categoria, etiquetas,
+  ícone e logo, caixas de seleção, anexos) e as linhas com interruptor têm o mesmo fundo, a mesma
+  borda e os mesmos cantos, e escurecem a borda da mesma forma ao passar o ponteiro, sem cobrir o
+  vermelho de um campo com erro. As opções escolhidas em listas de cartões (escopo de edição,
+  parcelas, períodos, orçamentos a copiar) usam a borda coral sobre o mesmo destaque, e os quadros
+  informativos dentro dos formulários usam um único tom neutro.
+- Lançamentos: **Exportar** fica branco como os demais botões da barra de ações, e **Filtros**
+  ganha um leve tom coral para se destacar.
+- Cabeçalho: a sombra dos submenus deixa de ser cortada em um retângulo acinzentado ao redor do
+  painel.
+- Celular: a barra inferior mostra só os ícones, em cinco colunas iguais, e o botão **Novo** fica
+  exatamente no centro da tela; leitores de tela continuam anunciando o nome de cada destino. Os
+  ícones passam de 20 para 24 px, e o destaque da aba ativa e o botão **Novo**, de 48 × 28 para
+  60 × 36 px.
+- Celular: o zoom com dois dedos e com toque duplo fica desativado no aplicativo.
+- Celular: o botão **Novo** da barra inferior também cria anotações. **Nova anotação** aparece
+  abaixo de despesa, receita e transferência, separada por um divisor, e a folha passa a se chamar
+  **Novo**.
+- O atalho da barra inferior para a Caixa de entrada passa a se chamar **Caixa de entrada**, como
+  no menu e na página, em vez de **Capturas**.
+- Celular: na Caixa de entrada, **Descartar** e **Revisar** ficam lado a lado, com a mesma largura,
+  ocupando toda a largura do card e 44 px de altura (**Restaurar** e o ícone de excluir em
+  vermelho, nas descartadas; nas confirmadas, **Excluir** em vermelho na largura toda). Os
+  detalhes abrem com um toque na parte de cima do card (nome, hora e texto da notificação),
+  indicada por uma seta ao lado do nome; o ícone de olho, que se confundia com o de ocultar
+  valores, sai do celular.
+- Celular: os cards de Orçamentos seguem o padrão de Contas e Cartões, com **Editar**,
+  **Lançamentos** e o menu de mais ações na mesma linha, todos com 44 px de altura. O botão
+  **Detalhes**, que abre o lançado e o previsto, passa para a linha do saldo restante.
+- Celular: Metas, Anotações e Pessoas adotam o mesmo rodapé de ações dos demais cards, e as ações
+  do rodapé de todos os cards passam a usar um único estilo.
+
+### Corrigido
+
+- Celular: trocar de página não pisca mais. A página nova aparecia, sumia e voltava a surgir logo
+  depois da transição, e na troca entre abas o fundo aparecia por um instante entre as duas telas.
+- Celular: as barras do sistema acompanham o modo e o tema do aplicativo, mesmo quando o navegador
+  ou o celular estão em outro modo. A página guardava uma segunda cor, clara e fixa, que podia
+  prevalecer na barra de status. O manifesto do aplicativo instalado, de onde o Firefox tira a cor
+  das barras e o Chrome a da barra de navegação, passa a trazer a cor do tema em uso, em vez de um
+  claro fixo; o navegador aplica a mudança ao reabrir o aplicativo.
+- Celular: no menu de navegação, **Ajustes** fica alinhado aos demais itens, com o divisor reto, e
+  a barra inferior se recolhe enquanto o menu está aberto, em vez de aparecer através dele.
+- Cartões: o card **Gastos do cartão** não passa mais da borda no celular. O gráfico, os valores e a
+  legenda ficavam mais largos que o card e eram cortados à direita. A comparação com a fatura
+  anterior vira uma frase só. O maior gasto e as parcelas de outras datas ficam em linhas de rótulo
+  e valor no celular e, em telas largas, em pares compactos ao lado do total, sem o espaço vazio que
+  separava rótulo e valor. A legenda fica centralizada, quebrando em duas linhas quando falta
+  espaço.
+  O marcador de **Fatura anterior** passa a ser tracejado como a linha que representa.
+- Cartões: a comparação com a fatura anterior por pessoa passa a contar compras e recorrências
+  divididas pela parte de cada um. Antes, uma assinatura dividida, como uma Netflix repartida entre
+  duas pessoas, contava inteira para quem a cadastrou, e o seletor de pessoa nem aparecia quando
+  essa era a única forma de outra pessoa ter gastos no cartão. O total da fatura não muda.
+- Compromissos futuros: em **Parcelamentos que terminam**, cada compra ocupa duas linhas (nome e
+  valor; data de término), e o card não corta mais a data nem o valor em telas estreitas.
+
+### Notas de atualização
+
+- API: em `GET /dashboard/attention` (`DashboardAttention`), `kind` de cada item e
+  `unavailableSources` aceitam o novo valor `task`, para tarefas pendentes das Anotações com prazo
+  vencido ou nos próximos sete dias. Clientes com validação estrita da resposta devem aceitar o
+  novo valor. Não há migrations nem mudanças de ambiente ou Compose.
+
+## [0.19.0] - 2026-11-20
+
+Experiência de aplicativo no celular com PWA instalável, temas próprios para o modo claro e para o
+escuro, anexos em anotações e imagens coladas direto nos formulários. Transferências entre contas
+aparecem como um único lançamento, e a interface ganha uma rodada de acessibilidade: campos com
+nome para leitores de tela, região principal e títulos corretos, contraste nos controles marcados e
+cards de indicadores com o mesmo visual em todo o app.
+
+### Adicionado
+
+- Celular: bottom sheets (novo lançamento, filtros, listas de opções, seletores de data e de
+  registro, atalho da barra inferior) fecham ao arrastar para baixo, e o menu de navegação fecha
+  ao arrastar para a direita. Uma alça no topo indica o gesto; o botão de fechar continua lá, e
+  alterações não salvas ainda pedem confirmação antes de descartar.
+- Celular: em Contas, Cartões, Categorias, Pessoas, Metas, Orçamentos, Etiquetas, Anotações e
+  Lançamentos recorrentes, a ação de criar vira um botão flutuante acima da barra inferior, ao
+  alcance do polegar, e desce junto com a barra quando ela se esconde na rolagem.
+- Celular: a revisão da importação de extrato mostra cada lançamento num cartão com descrição,
+  pessoa e categoria editáveis, em vez de uma tabela com rolagem lateral.
+- Aplicativo instalado: atalhos para Lançamentos, Caixa de entrada e Contas no ícone, com idioma e
+  descrição no manifesto.
+- Aplicativo instalado: abre mais rápido e, sem internet, mostra uma tela própria que volta sozinha
+  quando a conexão retorna. Só os arquivos do aplicativo ficam salvos no aparelho; páginas e dados
+  financeiros sempre vêm do servidor. Uma nova versão aparece num aviso com **Atualizar**, sem
+  recarregar no meio de um formulário.
+- Aplicativo instalado: puxar a tela para baixo no topo atualiza os dados exibidos, e no iPhone
+  arrastar a partir da borda esquerda volta para a tela anterior.
+- Aplicativo instalado no iPhone: tela de abertura com o símbolo do OpenMonetis no tema claro e
+  no escuro, no lugar da tela branca.
+- Aplicativo instalado: o número de notificações não lidas aparece no ícone.
+- Celular: o menu ganha **Instalar o app**, com o ícone do OpenMonetis, que instala com um toque
+  no Android e mostra o passo a passo no iPhone; a opção some quando o app já está instalado.
+- Celular: transições entre telas como num aplicativo. A tela de detalhe entra pela lateral, voltar
+  a faz sair e as abas da barra inferior trocam com um esmaecimento curto; topo e barra inferior
+  ficam parados. Mudar filtros, mês ou busca não anima.
+- Celular: ao rolar, o título da página passa para a barra superior; tocar nele, ou na aba já
+  aberta da barra inferior, volta ao topo.
+- Celular: uma faixa avisa quando a conexão cai, e um aviso confirma quando ela volta.
+- Celular: vibração curta ao armar o puxar para atualizar, fechar um painel arrastando e abrir a
+  escolha do atalho (Android).
+- Anotações: notas, listas e tarefas aceitam anexos em PDF, JPEG, PNG ou WebP. Ao criar, os
+  arquivos são enviados junto com a anotação; ao editar ou nos detalhes, são enviados e removidos
+  na hora, numa grade com miniaturas e pré-visualização. O cartão mostra quantos anexos a anotação
+  tem, anotações arquivadas ficam só para consulta, e ao excluir uma anotação os arquivos que não
+  estão em nenhum lançamento são apagados. Com o formulário ou os detalhes abertos, uma imagem
+  copiada (como um print) pode ser colada com Ctrl+V em qualquer ponto, e colar texto nos campos
+  continua funcionando normalmente.
+- Lançamentos: no formulário de nova receita, despesa ou edição, uma imagem copiada (como um print)
+  pode ser colada com Ctrl+V em qualquer campo para virar anexo. A seção "Etiquetas, anotações e
+  anexos" abre sozinha para mostrar o arquivo adicionado.
+- Ajustes > Preferências: temas inspirados em temas de terminal, escolhidos à parte para o modo
+  claro e para o escuro. No claro: OpenMonetis, Absolutely (fundo creme e laranja no estilo do
+  Claude), Catppuccin Latte, Everforest Light, Flexoki Light, GitHub (Light, Light High Contrast,
+  Light Colorblind e Light Legacy), Rosé Pine Dawn e Tokyo Night Day; no escuro: OpenMonetis,
+  Absolutely (grafite quente e laranja no estilo do Claude), Catppuccin Mocha, Everforest Dark,
+  Flexoki Dark, GitHub (Dark, Dark Dimmed, Dark High Contrast, Dark Colorblind e Dark Legacy),
+  Gotham, Gruvbox Dark, Jellybeans, Monokai Classic, Moonfly, Nord, Posterpole (padrão e Gray),
+  Rosé Pine Moon, Terminal (preto, âmbar e verde-fósforo, com cantos retos e todo o texto em fonte
+  monoespaçada), Tokyo Night (Night, Storm e Moon) e Vesper.
+  Claro e escuro aparecem lado a lado, cada um num card com uma miniatura do tema nas cores, fonte
+  e cantos reais e o seletor logo abaixo, e um selo indica o modo em uso; clicar na miniatura
+  também abre a lista, cada opção mostra uma amostra do tema e, ao navegar pela lista com o mouse
+  ou as setas, a miniatura mostra o tema destacado antes da escolha; famílias com várias
+  variantes, como GitHub e Tokyo Night, aparecem agrupadas sob o próprio nome. Receitas continuam
+  verdes e despesas vermelhas, exceto nos temas GitHub Colorblind, que usam azul e laranja como o
+  próprio GitHub faz para daltonismo; os textos mantêm contraste mínimo de 4,5:1 e as séries dos
+  gráficos 3:1, verificados em todos os temas a cada execução dos testes, e fora do tema
+  OpenMonetis o símbolo do logo fica monocromático. O guia `docs/themes.md` descreve como adicionar
+  um tema e as regras de contraste.
+- Aparência ao alcance: o botão de tema do cabeçalho virou um menu com Sistema, Claro e Escuro,
+  mostra o tema em uso e leva a Preferências para trocá-lo; a busca (Ctrl K ou ⌘K) encontra modos
+  e temas pelo nome, e escolher um tema do outro modo já muda para ele. Em Preferências, o modo
+  virou um seletor compacto de uma linha e modo e temas passam a ser salvos na hora, como no
+  cabeçalho e na busca, enquanto as demais preferências continuam valendo ao salvar; ao escolher
+  um tema, a página sugere usar o par dele no outro modo (Catppuccin Latte com Mocha, por
+  exemplo). Trocar de modo ou tema faz uma transição curta, desligada para quem pede menos
+  movimento no sistema. Quando o dispositivo pede mais contraste, Preferências sugere o GitHub
+  High Contrast nos dois modos, com opção de dispensar a sugestão.
+
+### Alterado
+
+- Os cards de indicadores dos relatórios (Calendário, Distribuição financeira, Parcelamentos,
+  Metas, Tendências e outros) seguem o mesmo visual dos indicadores da visão geral: rótulo discreto
+  com ícone, valor em destaque e contexto logo abaixo.
+- Telas com seletor de mês: a barra de mês fixa ocupa toda a largura, com fundo translúcido, em vez
+  de uma pílula que deixava os cards aparecerem pelas laterais ao rolar. Navegando pelo teclado, o
+  campo em foco não fica mais escondido atrás do topo e da barra de mês.
+- Interruptores e opções marcadas ganham um contorno mais escuro, que se destaca também nos temas
+  claros.
+- Textos de carregamento e de busca usam reticências (…), e o tamanho dos anexos aparece no
+  formato brasileiro (1,5 MB).
+- Celular: no menu, o botão de privacidade diz **Ocultar valores** ou **Mostrar valores**.
+- Visão geral: **Restaurar organização padrão** usa o mesmo nome no botão, na dica e na
+  confirmação.
+- Lançamentos: uma transferência entre contas aparece como um único lançamento, com os logos das
+  duas contas lado a lado e a indicação de origem → destino, em vez de duas linhas de saída e
+  entrada. Filtrando por uma das contas, ou no extrato da conta, continua aparecendo só o lado
+  daquela conta, com o sinal de saída ou entrada.
+- Celular: todos os botões, abas, itens de menu, listas e campos têm área de toque de pelo menos
+  44 px; botões de ícone e caixas de seleção ganham uma área invisível ao redor, sem mudar o
+  layout.
+- Celular: linhas de lançamentos, itens de menu, dias do calendário e destinos da barra inferior
+  respondem ao toque com um estado pressionado. A aba ativa da barra inferior ganha um destaque
+  atrás do ícone, e **Novo** aparece como a ação principal.
+- Celular: o topo das páginas fica mais compacto. Páginas principais não repetem o link para a
+  visão geral, a descrição se limita a duas linhas e o conteúdo começa mais acima.
+- Explicações antes só disponíveis ao passar o mouse (saldo de conta, fechamento variável do
+  cartão, categorias automáticas, como ler os gráficos, média e variação em Tendências, ordem das
+  regras da Caixa de entrada) abrem também com um toque. Os valores por pessoa das contas a pagar
+  e das faturas no painel ganham um botão próprio no celular.
+- A barra do sistema acompanha a cor de fundo do app no tema claro e no escuro.
+- Avisos aparecem acima da barra inferior no celular, e os textos em caixa alta de cabeçalhos
+  de data e de tabelas sobem para 12 px.
+- Login e cadastro sugerem **Próximo** e **Entrar** no teclado do celular, e nomes de pessoa
+  começam com maiúscula.
+- Aplicativo instalado: textos da interface não são mais selecionados por toque longo, nem abrem
+  prévia de link; campos, anotações e respostas da IA continuam copiáveis.
+
+### Corrigido
+
+- Leitores de tela encontram o conteúdo de cada página na região principal, separado do topo e da
+  navegação, e navegam pela visão geral pelos títulos de cada widget.
+- O gráfico de receitas, despesas e resultado da visão geral ganha uma tabela com os valores dos
+  seis meses para leitores de tela; no modo privacidade os valores continuam ocultos.
+- Leitores de tela anunciam o nome de cada campo do formulário de lançamento (data, forma de
+  pagamento, cartão, conta, pessoa, repetição) e leem a mensagem de erro junto do campo.
+- Visão geral: os logos das contas a pagar e das faturas deixam de ser links sem nome para teclado
+  e leitores de tela; o nome ao lado continua levando ao mesmo lugar.
+- A área de avisos é anunciada como "Notificações", em português.
+- No widget de anotações da visão geral, uma falha ao salvar não mostra mais "Anotação criada".
+- O zoom com dois dedos voltou a funcionar no celular.
+- Os links de voltar e as trilhas de navegação no topo das páginas não recarregam mais o
+  aplicativo inteiro.
+- Cabeçalho, barra inferior e páginas respeitam o recorte da tela e o indicador inicial em
+  aparelhos com entalhe, também com o celular deitado.
+- Em Ajustes, um e-mail longo não empurra mais o conteúdo para fora da tela no celular.
+- Celular: o formulário de anotação não espalha mais os campos pela altura da tela.
+- Cabeçalho: os quatro menus de navegação abrem com o mesmo fundo translúcido; Lançamentos e
+  Relatórios apareciam opacos, diferentes de Finanças e Organização. O fundo dos itens e botões ao
+  passar o mouse, com o menu aberto ou na seção atual também é igual em todas as paletas, e um
+  menu fechado não deixa mais o item marcado.
+
+### Notas de atualização
+
+- Banco: a migration `0035_user_palettes.sql` adiciona as colunas de texto `light_palette` e
+  `dark_palette` a `user_preferences`, com padrão `openmonetis`; preferências existentes continuam
+  com a aparência atual. A lista de temas válidos fica no domínio, então novos temas não exigem
+  migration, e um tema retirado que ainda esteja salvo volta ao padrão na leitura.
+- API: `UserPreferencesOutput` e `UpdateUserPreferencesInput` ganham `lightPalette` (11 valores,
+  de `openmonetis` a `tokyoNight`) e `darkPalette` (24 valores, incluindo `absolutely`,
+  `monokai`, `nord`, `terminal`, `vesper`, `tokyoNightStorm` e as variantes `github*`); a lista
+  completa está no contrato OpenAPI. Clientes com validação estrita da resposta devem aceitar os dois campos.
+- Banco: a migration `0034_note_attachments.sql` cria a tabela `note_attachments`, que liga cada
+  anotação a anexos do mesmo usuário; nenhum dado existente é alterado. Faça backup antes de
+  atualizar e acompanhe `docker compose logs migrator`.
+- API: em `GET /transactions`, os dois lados de uma transferência passam a vir como uma única
+  entrada, com valor sem sinal e `transferLeg` igual a `both`. Filtrando por uma conta, cada lado
+  continua separado e com sinal (`source` ou `destination`). `TransactionOutput` ganha
+  `transferLeg`, nulo fora de transferências. Clientes que somavam os dois lados da listagem
+  precisam tratar a entrada mesclada; a exportação continua com os dois lançamentos.
+- API: rotas novas `GET /attachments/note/{noteId}`, `POST /attachments/note/{noteId}/prepare`,
+  `POST /attachments/note/{noteId}/confirm` e `DELETE /attachments/note/{noteId}/{attachmentId}`;
+  `NoteOutput` ganha `attachmentCount`. Anotações arquivadas recusam envio e remoção de anexos.
+
 ## [0.18.0] - 2026-11-17
 
 Novo calendário do mês com vencimentos, faturas e tarefas, busca global com Ctrl K, orçamentos que
@@ -1444,7 +1734,10 @@ API-first, com cliente web em PT-BR, domínio financeiro isolado e implantação
 - Backup e restauração definidos como operações de infraestrutura, cobrindo PostgreSQL, objetos do
   storage e segredos da implantação.
 
-[Unreleased]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.20.1...HEAD
+[0.20.1]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.20.0...v0.20.1
+[0.20.0]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.19.0...v0.20.0
+[0.19.0]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/felipegcoutinho/openmonetis-v2/compare/v0.16.0...v0.17.0
